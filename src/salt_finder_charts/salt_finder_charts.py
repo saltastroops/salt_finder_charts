@@ -1138,7 +1138,7 @@ class FindingChart:
 
 def finder_chart(
     mode: Mode, target: Target, pa: float, survey: Survey = Survey.POSS2UKSTU_RED
-):
+) -> Image:
     fc = FindingChart(
         mode=mode,
         target=target,
