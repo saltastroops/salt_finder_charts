@@ -13,7 +13,7 @@ test_requirements = ['pytest']
 
 setup(
     author="SAAO/SALT",
-    author_email='salthelp@salt.ac.za',
+    author_email='salt-software@saao.ac.za',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
