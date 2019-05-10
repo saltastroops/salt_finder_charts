@@ -2,7 +2,7 @@
 
 Generate finder charts for the Southern African Large Telescope (SALT).
 
-## This API will change...
+## This package will change...
 
 This is a preliminary and rudimentary version, and you should expect major changes in future versions.
 
@@ -23,14 +23,31 @@ from salt_finder_charts import finder_chart, Mode, Survey, Target
 
 # Replace with a file path of your choice.
 # The file extension must be one of those supported by the Pillow package.
-out =  "/path/to/finder_chart.pdf"
+out = "/path/to/finder_chart.png"
 
-target = Target(ra=13.1867, dec=-72.828611, name="SMC")
+target = Target(ra=189.99763271, dec=-11.62305428, name="Sombrero Galaxy")
 fc = finder_chart(target=target, mode=Mode.IMAGING, pa=15, survey=Survey.POSS2UKSTU_RED)
 fc.save(out)
 ```
 
 The function takes a mode, target details, a position angle and (optionally) a survey as its arguments and returns an `Image` object. Refer to the [documentation for the Pillow package](https://pillow.readthedocs.io/en/stable/) for details on how to use this object.
+
+The generated finder chart image contains RGBA data. Depending on your needs, you might have to [convert it to RGB data](https://stackoverflow.com/questions/50763236/converting-png-to-pdf-with-pil-save-mode-error). For example, you would have extend the above example for saving the finder chart as a pdf.
+
+```python
+from PIL import Image
+from salt_finder_charts import finder_chart, Mode, Survey, Target
+
+# Replace with a file path of your choice.
+# The file extension must be one of those supported by the Pillow package.
+out = "/path/to/finder_chart.pdf"
+
+target = Target(ra=189.99763271, dec=-11.62305428, name="Sombrero Galaxy")
+fc = finder_chart(target=target, mode=Mode.IMAGING, pa=15, survey=Survey.POSS2UKSTU_RED)
+rgb = Image.new('RGB', fc.size, (255, 255, 255))  # white background
+rgb.paste(fc, mask=fc.split()[3])                 # paste using alpha channel as mask
+rgb.save(out)
+```
 
 ## Input arguments
 
