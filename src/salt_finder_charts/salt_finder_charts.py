@@ -5,6 +5,8 @@ import base64
 import xml.dom.minidom
 from astropy import units
 from astropy.coordinates.angles import Angle
+from astropy.units import Quantity
+from astropy import units as u
 import astropy.io.fits as pyfits
 import numpy as np
 import datetime
@@ -16,7 +18,7 @@ import math
 import ephem
 import os
 from PIL import Image
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Tuple, Union
 import urllib.parse
 import urllib.request
 
@@ -85,8 +87,8 @@ class NonSiderealFindingCharts:
 
     # Assume B to the box just covering the target path. Then
     # MINIMUM_PATH_BOX_WIDTH is the minimum width of B for
-    # which the path should be plotted (in degrees).
-    MINIMUM_PATH_BOX_WIDTH = 16.0 / 3600.0
+    # which the path should be plotted.
+    MINIMUM_PATH_BOX_WIDTH = 16.0 * u.arcsec
 
     def __init__(self, ephemeris_generator):
         """
@@ -532,7 +534,7 @@ class FindingChart:
         self,
         target: Target,
         mode: Mode,
-        pa: float = None,
+        pa: Quantity = None,
         survey: Survey = None,
         fits=None,
         bandpass=None,
@@ -652,13 +654,19 @@ class FindingChart:
         if self.survey_figure:
             self.survey_figure.close()
 
-    # save the plot
-    def save(self):
+    # export the plot content as an Image object
+    def to_image(self) -> Image:
         out = io.BytesIO()
         self.plot.save(out, format="png")
         img = Image.open(out)
         img.load()
         return img
+
+    # export the plot content as a PDF
+    def to_pdf(self) -> bytes:
+        out = io.BytesIO()
+        self.plot.save(out, format="pdf")
+        return out.getvalue()
 
     # grab MOS xml definition from WM given account and barcode
     @staticmethod
@@ -688,7 +696,7 @@ class FindingChart:
 
     # grab 10' x 10' image from server and pull it into pyfits
     @staticmethod
-    def get_dss(survey, ra, dec):
+    def get_dss(survey: Survey, ra: Quantity, dec: Quantity):
         url = None
         params = None
         if survey in FindingChart.STSCI_SURVEYS:
@@ -696,8 +704,8 @@ class FindingChart:
             params = urllib.parse.urlencode(
                 {
                     "v": survey,
-                    "r": "%f" % ra,
-                    "d": "%f" % dec,
+                    "r": "%f" % ra.to_value(u.deg),
+                    "d": "%f" % dec.to_value(u.deg),
                     "e": "J2000",
                     "h": 10.0,
                     "w": 10.0,
@@ -706,8 +714,8 @@ class FindingChart:
                 }
             ).encode("utf-8")
         elif survey in FindingChart.SKY_VIEW_SURVEYS:
-            ra = Angle(ra, unit=units.degree)
-            dec = Angle(dec, unit=units.degree)
+            ra = Angle(ra)
+            dec = Angle(dec)
             url = "https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl"
             params = urllib.parse.urlencode(
                 {
@@ -743,30 +751,35 @@ class FindingChart:
         fits_data.seek(0)
         return pyfits.open(fits_data)
 
+    def draw_circle(self, center_ra: Quantity, center_dec: Quantity, radius: Quantity, color: str):
+        self.plot.show_circles(
+            [center_ra.to_value(u.deg)],
+            [center_dec.to_value(u.deg)],
+            [radius.to_value(u.deg)],
+            edgecolor=color)
+
     # draw a line centered at ra,dec of a given length at a given angle
     # theta,ra,dec => deg; length => arcmin
-    def draw_line(self, theta, length, ra, dec, color="b", linewidth=1.0, alpha=0.7):
-        theta = theta * np.pi / 180.0
-        length /= 2.0
-        dx = np.sin(theta) * length / (np.cos(dec * np.pi / 180.0) * 60.0)
-        dy = np.cos(theta) * length / 60.0
-        coords = np.array([[ra + dx, ra - dx], [dec + dy, dec - dy]])
+    def draw_line(self, theta: Quantity, length: Quantity, ra: Quantity, dec: Quantity, color: str="b", linewidth: float=1.0, alpha: float=0.7):
+        _length = length / 2.0
+        dx = np.sin(theta) * _length / np.cos(dec)
+        dy = np.cos(theta) * _length
+        coords = np.array([[(ra + dx).to_value(u.deg), (ra - dx).to_value(u.deg)], [(dec + dy).to_value(u.deg), (dec - dy).to_value(u.deg)]])
         self.plot.show_lines([coords], color=color, linewidth=linewidth, alpha=alpha)
 
     # draw a box centered at ra,dec of a given length and width at a given angle
     # theta,ra,dec => deg; width, height => arcmin
-    def draw_box(self, theta, width, length, ra, dec, color, linewidth=1, alpha=0.7):
-        theta = theta * np.pi / 180.0
+    def draw_box(self, theta: Quantity, width: Quantity, length: Quantity, ra: Quantity, dec: Quantity, color, linewidth=1, alpha=0.7):
         length /= 2.0
         width /= 2.0
         # position of line centers
-        ra_l = ra + np.cos(theta) * width / (np.cos(dec * np.pi / 180.0) * 60.0)
-        ra_r = ra - np.cos(theta) * width / (np.cos(dec * np.pi / 180.0) * 60.0)
-        dec_l = dec - np.sin(theta) * width / 60.0
-        dec_r = dec + np.sin(theta) * width / 60.0
+        ra_l = ra + np.cos(theta) * width / np.cos(dec)
+        ra_r = ra - np.cos(theta) * width / np.cos(dec)
+        dec_l = dec - np.sin(theta) * width
+        dec_r = dec + np.sin(theta) * width
 
-        dx = np.sin(theta) * length / (np.cos(dec * np.pi / 180.0) * 60.0)
-        dy = np.cos(theta) * length / 60.0
+        dx = np.sin(theta) * length / np.cos(dec)
+        dy = np.cos(theta) * length
         coords = np.array(
             [
                 [ra_l, ra_l + dx, ra_r + dx, ra_r - dx, ra_l - dx, ra_l],
@@ -775,29 +788,49 @@ class FindingChart:
         )
         self.plot.show_lines([coords], color=color, linewidth=linewidth, alpha=alpha)
 
+    # draw a label
+    # if x and y are Quantity instances, they are interpreted as world coordinates, if
+    # they are float values, they're taken to be plot coordinates
+    def draw_label(self, x: Union[Quantity, float], y: Union[Quantity, float], text: str, **kwargs):
+        if isinstance(x, Quantity) and isinstance(y, Quantity):
+            _x = x.to_value(u.deg)
+            _y = y.to_value(u.deg)
+            relative = False
+        else:
+            _x = x
+            _y = y
+            relative = True
+        self.plot.add_label(
+            _x,
+            _y,
+            text,
+            relative=relative,
+            **kwargs
+        )
+
     # draw slits and reference boxes for MOS
     def draw_mos_mask(self, slits, refs, pa):
         # draw the slits
         for slit in slits:
-            tilt = 0.0
+            tilt = 0.0 * u.deg
             if "tilt" in slit.attributes.keys():
-                tilt = float(slit.attributes["tilt"].value)
+                tilt = float(slit.attributes["tilt"].value) * u.deg
             self.draw_box(
-                pa + tilt,
-                float(slit.attributes["width"].value) / 60.0,
-                float(slit.attributes["length"].value) / 60.0,
-                float(slit.attributes["xce"].value),
-                float(slit.attributes["yce"].value),
+                (pa + tilt),
+                float(slit.attributes["width"].value) * u.arcmin,
+                float(slit.attributes["length"].value) * u.arcmin,
+                float(slit.attributes["xce"].value) * u.deg,
+                float(slit.attributes["yce"].value) * u.deg,
                 color="r",
             )
         # make bigger boxes around the reference objects
         for ref in refs:
             self.draw_box(
                 pa,
-                5.0 / 60.0,
-                5.0 / 60.0,
-                float(ref.attributes["xce"].value),
-                float(ref.attributes["yce"].value),
+                5.0 * u.arcmin,
+                5.0 * u.arcmin,
+                float(ref.attributes["xce"].value) * u.deg,
+                float(ref.attributes["yce"].value) * u.deg,
                 color=(1, 1, 0),
                 linewidth=2,
             )
@@ -899,25 +932,23 @@ class FindingChart:
                 }
 
             # add the start time label
-            self.plot.add_label(
+            self.draw_label(
                 label_position_start["horizontal_position"],
                 label_position_start["vertical_position"]
                 + label_position_start["vertical_shift"],
                 start_time.strftime("%Y-%m-%d %H:%M UT"),
-                relative=False,
-                size="8",
+                 size="8",
                 horizontalalignment=label_position_start["horizontal_alignment"],
                 verticalalignment=label_position_start["vertical_alignment"],
                 color=(0, 0, 1),
             )
 
             # add the end time label
-            self.plot.add_label(
+            self.draw_label(
                 label_position_end["horizontal_position"],
                 label_position_end["vertical_position"]
                 + label_position_end["vertical_shift"],
                 end_time.strftime("%Y-%m-%d %H:%M UT"),
-                relative=False,
                 size="8",
                 horizontalalignment=label_position_end["horizontal_alignment"],
                 verticalalignment=label_position_end["vertical_alignment"],
@@ -926,21 +957,20 @@ class FindingChart:
 
             # add a "target circle" if the movement isn't significant
             if not significant_movement:
-                self.plot.show_circles(
-                    [center_ra],
-                    [center_dec],
-                    [NonSiderealFindingCharts.MINIMUM_PATH_BOX_WIDTH / 2.0],
-                    edgecolor="b",
+                self.draw_circle(
+                    center_ra,
+                    center_dec,
+                    NonSiderealFindingCharts.MINIMUM_PATH_BOX_WIDTH / 2.0,
+                    "b",
                 )
         else:
             # output the time range
-            self.plot.add_label(
+            self.draw_label(
                 center_ra,
-                center_dec - 4 / 60.0,
+                center_dec - 4 * u.arcmin,
                 start_time.strftime("%Y-%m-%d %H:%M UT")
                 + " - "
                 + end_time.strftime("%Y-%m-%d %H:%M UT"),
-                relative=False,
                 size="large",
                 horizontalalignment="center",
                 verticalalignment="bottom",
@@ -953,12 +983,12 @@ class FindingChart:
         else:
             self.show_magnitudes(center_ra, center_dec, None, "V")
 
-    def show_arrow_head(self, ra, dec, dra, ddec):
+    def show_arrow_head(self, ra: Quantity, dec: Quantity, dra: Quantity, ddec: Quantity):
         h = 0.002
         w = 0.0013
-        ra_correction = abs(math.cos(math.radians(dec)))
+        ra_correction = abs(math.cos(dec))
         v_x, v_y = dra * ra_correction, ddec
-        length = math.sqrt(v_x ** 2 + v_y ** 2)
+        length = np.sqrt(v_x ** 2 + v_y ** 2)
         v_x, v_y = (
             v_x / length,
             v_y / length,
@@ -982,14 +1012,13 @@ class FindingChart:
                 mag_text = bandpass + " = %.1f - %.1f" % (mag_min, mag_max)
         else:
             mag_text = "no magnitude available"
-        self.plot.add_label(
+        self.draw_label(
             ra,
-            dec - 4.8 / 60.0,
+            dec - 4.8 * u.arcmin,
             mag_text,
             style="italic",
             weight="bold",
             size="large",
-            relative=False,
             horizontalalignment="center",
             verticalalignment="bottom",
             color=(0, 0.5, 1),
@@ -1016,29 +1045,26 @@ class FindingChart:
         self.plot.set_theme("publication")
         sys.stdout = out
 
-        self.plot.add_label(
+        self.draw_label(
             0.95,
             -0.05,
             "PA = %.1f" % self.pa,
-            relative=True,
             style="italic",
             weight="bold",
         )
 
-        self.plot.add_label(
+        self.draw_label(
             0.5,
             1.03,
             self.title,
-            relative=True,
             style="italic",
             weight="bold",
             size="large",
         )
-        self.plot.add_label(
+        self.draw_label(
             -0.05,
             -0.05,
             "%s" % survey_names[self.survey],
-            relative=True,
             style="italic",
             weight="bold",
         )
@@ -1047,46 +1073,50 @@ class FindingChart:
         self.plot.grid.set_alpha(0.2)
         self.plot.grid.set_color("b")
 
-        self.plot.show_circles(
-            [self.ra, self.ra],
-            [self.dec, self.dec],
-            [4.0 / 60.0, 5.0 / 60.0],
-            edgecolor="g",
-        )
+        self.draw_circle(
+            self.ra,
+            self.dec,
+            4.0 * u.arcmin,
+            "g",
+            )
+        self.draw_circle(
+            self.ra,
+            self.dec,
+            5.0 * u.arcmin,
+            "g",
+            )
 
-        self.plot.add_label(
+        self.draw_label(
             0.79,
             0.79,
             "RSS",
-            relative=True,
             style="italic",
             weight="bold",
             size="large",
             horizontalalignment="left",
             color=(0, 0, 1),
         )
-        self.plot.add_label(
+        self.draw_label(
             0.86,
             0.86,
             "SCAM",
-            relative=True,
             style="italic",
             weight="bold",
             size="large",
             horizontalalignment="left",
             color=(0, 0, 1),
         )
-        self.plot.add_label(
+        self.draw_label(
             self.ra,
-            self.dec + 4.8 / 60.0,
+            self.dec + 4.8 * u.arcmin,
             "N",
             style="italic",
             weight="bold",
             size="large",
             color=(0, 0.5, 1),
         )
-        self.plot.add_label(
-            self.ra + 4.8 / (np.abs(np.cos(self.dec * np.pi / 180.0)) * 60),
+        self.draw_label(
+            self.ra + 4.8 * u.arcmin / np.abs(np.cos(self.dec)),
             self.dec,
             "E",
             style="italic",
@@ -1095,8 +1125,8 @@ class FindingChart:
             horizontalalignment="right",
             color=(0, 0.5, 1),
         )
-        self.draw_line(0, 8, self.ra, self.dec, color="g", linewidth=0.5, alpha=1.0)
-        self.draw_line(90, 8, self.ra, self.dec, color="g", linewidth=0.5, alpha=1.0)
+        self.draw_line(0 * u.deg, 8 * u.arcmin, self.ra, self.dec, color="g", linewidth=0.5, alpha=1.0)
+        self.draw_line(90 * u.deg, 8 * u.arcmin, self.ra, self.dec, color="g", linewidth=0.5, alpha=1.0)
 
         if self.bandpass and self.mag_range:
             self.show_magnitudes(self.ra, self.dec, self.mag_range, self.bandpass)
@@ -1122,12 +1152,11 @@ class FindingChart:
             )
 
         if self.mode == "imaging":
-            self.plot.show_circles([self.ra], [self.dec], [0.8 / 60.0], edgecolor="g")
-            self.plot.add_label(
+            self.draw_circle(self.ra, self.dec, 0.8 * u.arcmin, "g")
+            self.draw_label(
                 0.57,
                 0.57,
                 "BVIT",
-                relative=True,
                 style="italic",
                 weight="bold",
                 size="large",
@@ -1135,19 +1164,21 @@ class FindingChart:
                 color=(0, 0, 1),
             )
 
-
 def finder_chart(
-    mode: Mode, target: Target, pa: float, survey: Survey = Survey.POSS2UKSTU_RED
-) -> Image:
-    fc = FindingChart(
+    mode: Mode, target: Target, pa: Optional[Quantity], survey: Survey = Survey.POSS2UKSTU_RED,
+        bandpass: str = None,
+        mag_range: Tuple[float, float] = None,
+        slitwidth: Quantity = None,
+        mos_mask: str = None, basic_annotation: bool = False
+) -> FindingChart:
+    return FindingChart(
         mode=mode,
         target=target,
         pa=pa,
         survey=survey,
-        bandpass=None,
-        mag_range=None,
-        slitwidth=None,
-        mos_mask=None,
-        basic_annotations=False,
+        bandpass=bandpass,
+        mag_range=mag_range,
+        slitwidth=slitwidth,
+        mos_mask=mos_mask,
+        basic_annotations=basic_annotation,
     )
-    return fc.save()
