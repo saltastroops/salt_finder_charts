@@ -75,6 +75,9 @@ docs: ## generate Sphinx HTML documentation
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
 
+types: ## run tests quickly with the default Python
+	mypy --strict src/salt_finder_charts
+
 test-release: dist ## package and upload a release to the test PyPI
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
