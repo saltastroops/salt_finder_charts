@@ -274,6 +274,13 @@ class HorizonsEphemerisService(EphemerisService):
     """
     An ephemeris generator using the JPL Horizons service.
 
+    In order to avoid missing ephemerides, you should choose a start time at least two
+    days earlier than the start time from which you generate finder charts, and you
+    should choose an end time at least two days later than the end time until which
+    you generate finder charts. This is necessary as the calculated visibility windows
+    are not strictly confined to the time interval for which finder charts shall be
+    generated.
+
     Parameters
     ----------
     object_id : str

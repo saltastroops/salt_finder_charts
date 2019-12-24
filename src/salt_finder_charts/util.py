@@ -27,16 +27,6 @@ class MagnitudeRange(NamedTuple):
     min_magnitude: float
 
 
-class OutputFormat(enum.Enum):
-    """
-    Output format for the generated finder chart.
-
-    """
-
-    PDF = "pdf"
-    PNG = "png"
-
-
 class MOSMaskSlit(NamedTuple):
     """
     A MOS mask slit.

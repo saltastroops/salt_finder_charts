@@ -74,7 +74,7 @@ class FinderChart:
         start_time: datetime,
         end_time: datetime,
         ephemeris_service: EphemerisService,
-        image_generator: ImageService,
+        image_service: ImageService,
         mode_details: ModeDetails,
         title: str,
         basic_annotations: bool = False,
@@ -89,7 +89,7 @@ class FinderChart:
         self.ra, self.dec = EphemerisService.center_position(self.ephemerides)
         self.pa = mode_details.position_angle()
         self.magnitude_range = EphemerisService.find_magnitude_range(self.ephemerides)
-        self.image_generator = image_generator
+        self.image_generator = image_service
         self.mode_details = mode_details
         self.title = title
         self.basic_annotations = basic_annotations
@@ -320,9 +320,10 @@ class FinderChart:
         )
 
         # label for the title
-        self.draw_label(
-            0.5, 1.03, self.title, style="italic", weight="bold", size="large"
-        )
+        if self.title:
+            self.draw_label(
+                0.5, 1.03, self.title, style="italic", weight="bold", size="large"
+            )
 
         # label for the image source
         self.draw_label(
@@ -703,7 +704,7 @@ def finder_charts(
     start_time: datetime,
     end_time: datetime,
     ephemeris_service: EphemerisService,
-    image_generator: ImageService,
+    image_service: ImageService,
     title: str,
     basic_annotations: bool,
     output: Callable[[FinderChart, FinderChartMetadata], BinaryIO],
@@ -729,7 +730,7 @@ def finder_charts(
             start_time=start,
             end_time=end,
             ephemeris_service=ephemeris_service,
-            image_generator=image_generator,
+            image_service=image_service,
             mode_details=mode_details,
             title=title,
             basic_annotations=basic_annotations,
