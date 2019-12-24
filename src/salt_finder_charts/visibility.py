@@ -4,9 +4,9 @@ from typing import cast, List, Optional, Tuple
 
 from astropy.units import Quantity
 from astropy import units as u
+from dateutil.tz import tzutc
 import ephem
 import numpy as np
-import pytz
 
 from salt_finder_charts.ephemerides import EphemerisService
 
@@ -233,10 +233,10 @@ def _visibility_windows_next_night(
     """
 
     # get the night data
-    utc = pytz.timezone("UTC")
     observer = _salt_observer(t)
-    sunset = utc.localize(observer.next_setting(ephem.Sun()).datetime())
-    sunrise = utc.localize(observer.next_rising(ephem.Sun()).datetime())
+
+    sunset = observer.next_setting(ephem.Sun()).datetime().replace(tzinfo=tzutc())
+    sunrise = observer.next_rising(ephem.Sun()).datetime().replace(tzinfo=tzutc())
     night_ephemerides = ephemeris_service.ephemerides(sunset, sunrise)
 
     # get the visibility windows

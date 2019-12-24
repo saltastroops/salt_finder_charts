@@ -16,7 +16,7 @@ class Mode(enum.Enum):
 
     HRS = "hrs"
     IMAGING = "imaging"
-    LS = "ls"
+    LONGSLIT = "ls"
     MOS = "mos"
     SLOT = "slot"
 
@@ -147,7 +147,7 @@ class LongslitModeDetails(ModeDetails):
     """
 
     def __init__(self, slitwidth: Quantity, pa: Optional[Quantity]):
-        super().__init__(Mode.LS)
+        super().__init__(Mode.LONGSLIT)
         self.pa = pa if pa is not None else 0
         self.slitwidth = slitwidth
 

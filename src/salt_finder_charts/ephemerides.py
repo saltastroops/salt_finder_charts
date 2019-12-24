@@ -7,7 +7,7 @@ from astropy.units import Quantity
 from astropy import units as u
 from astroquery.jplhorizons import Horizons
 from dateutil.parser import parse
-import pytz
+from dateutil.tz import tzutc
 
 from salt_finder_charts.util import MagnitudeRange
 
@@ -305,9 +305,8 @@ class HorizonsEphemerisService(EphemerisService):
             raise ValueError("The sampling interval must be at least 5 minutes.")
 
         # query Horizons
-        utc = pytz.timezone("UTC")
-        start = start_time.astimezone(utc).strftime("%Y-%m-%d %H:%M:%S")
-        stop = end_time.astimezone(utc).strftime("%Y-%m-%d %H:%M:%S")
+        start = start_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
+        stop = end_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
         step = f"{round(stepsize.to_value(u.minute))}m"
         obj = Horizons(
             id=object_id,
@@ -319,7 +318,7 @@ class HorizonsEphemerisService(EphemerisService):
         # store the ephemerides in the format we need
         self._ephemerides = []
         for row in range(len(ephemerides)):
-            epoch = utc.localize(parse(ephemerides["datetime_str"][row]))
+            epoch = parse(ephemerides["datetime_str"][row]).replace(tzinfo=tzutc())
             ra = float(ephemerides["RA"][row]) * u.deg
             dec = float(ephemerides["DEC"][row]) * u.deg
             ra_rate = float(ephemerides["RA_rate"][row]) * u.arcsec / u.hour
