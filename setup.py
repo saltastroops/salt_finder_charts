@@ -5,7 +5,17 @@ from setuptools import setup, find_packages
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-requirements = ['numpy', 'aplpy', 'astropy', 'astroquery', 'ephem', 'pillow', 'defusedxml', 'pytz']
+requirements = [
+    'aplpy',
+    'astropy',
+    'astroquery',
+    'Click',
+    'defusedxml',
+    'ephem',
+    'numpy',
+    'pillow',
+    'pytz',
+]
 
 setup_requirements = ['pytest-runner']
 
@@ -40,4 +50,8 @@ setup(
     url='https://github.com/saltastroops/salt_finder_charts',
     version='0.1.0',
     zip_safe=False,
+    entry_points='''
+        [console_scripts]
+        saltfc=salt_finder_charts.cli:saltfc
+    '''
 )

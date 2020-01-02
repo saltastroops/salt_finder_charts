@@ -79,7 +79,7 @@ class ImagingModeDetails(ModeDetails):
 
     def __init__(self, pa: Optional[Quantity]):
         super().__init__(Mode.IMAGING)
-        self.pa = pa if pa is not None else 0
+        self.pa = pa if pa is not None else 0 * u.deg
 
     def position_angle(self) -> Quantity:
         return self.pa
@@ -115,7 +115,7 @@ class SlotModeDetails(ModeDetails):
 
     def __init__(self, pa: Optional[Quantity]):
         super().__init__(Mode.SLOT)
-        self.pa = pa
+        self.pa = pa if pa is not None else 0 * u.deg
 
     def position_angle(self) -> Quantity:
         return self.pa
@@ -148,7 +148,7 @@ class LongslitModeDetails(ModeDetails):
 
     def __init__(self, slitwidth: Quantity, pa: Optional[Quantity]):
         super().__init__(Mode.LONGSLIT)
-        self.pa = pa if pa is not None else 0
+        self.pa = pa if pa is not None else 0 * u.deg
         self.slitwidth = slitwidth
 
     def position_angle(self) -> Quantity:

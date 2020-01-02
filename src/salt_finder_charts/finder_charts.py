@@ -1,9 +1,11 @@
 import sys
 from datetime import datetime
+
 from astropy.units import Quantity
 from astropy import units as u
 import numpy as np
 import aplpy
+import pytz
 from typing import Any, BinaryIO, Callable, Generator, List, NamedTuple, Tuple, Union
 
 from salt_finder_charts import __version__
@@ -11,6 +13,7 @@ from salt_finder_charts.ephemerides import EphemerisService, Ephemeris
 from salt_finder_charts.image import ImageService
 from salt_finder_charts.mode import ModeDetails
 from salt_finder_charts import visibility
+from salt_finder_charts.util import julian_day_start, julian_day_end
 
 
 class FinderChartMetadata(NamedTuple):
@@ -701,15 +704,22 @@ class FinderChart:
 
 def finder_charts(
     mode_details: ModeDetails,
-    start_time: datetime,
-    end_time: datetime,
     ephemeris_service: EphemerisService,
     image_service: ImageService,
-    title: str,
-    basic_annotations: bool,
     output: Callable[[FinderChart, FinderChartMetadata], BinaryIO],
+        title: str = None,
+        start_time: datetime = None,
+        end_time: datetime = None,
+        basic_annotations: bool = False
 ) -> Generator[BinaryIO, None, None]:
     FOV_RADIUS = 3 * u.arcmin
+
+    # get default start and end time if need be
+    now = datetime.now(pytz.utc)
+    if not start_time:
+        start_time = julian_day_start(now)
+    if not end_time:
+        end_time = julian_day_end(now)
 
     # get all time intervals for which a finder chart must be generated
     intervals: List[Tuple[datetime, datetime]] = []

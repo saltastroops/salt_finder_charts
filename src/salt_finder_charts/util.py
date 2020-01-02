@@ -1,10 +1,11 @@
-import enum
+from datetime import datetime, timedelta
 from typing import List, NamedTuple, BinaryIO
 import zipfile
 
 import astropy.units as u
 from astropy.units import Quantity
 from defusedxml.minidom import parseString
+import pytz
 
 
 class MagnitudeRange(NamedTuple):
@@ -158,3 +159,63 @@ class MOSMask:
     @property
     def slits(self) -> List[MOSMaskSlit]:
         return self._slits
+
+
+def julian_day_start(t: datetime) -> datetime:
+    """
+    Return the start of a Julian day containing a datetime.
+
+    If the given datetime is noon (UTC) or later this is noon (UTC) of the given date,
+    otherwise it is noon (UTC) of the previous day.
+
+    Parameters
+    ----------
+    t : datetime
+        Datetime (must be timezone-aware).
+
+    Returns
+    -------
+    datetime
+        Default start time.
+
+    """
+
+    if not t.tzinfo:
+        raise ValueError('The datetime must be timezone-aware.')
+
+    t = t.astimezone(pytz.utc)
+    noon = t.replace(hour=12, minute=0, second=0, microsecond=0)
+    if t < noon:
+        return noon - timedelta(days=1)
+    else:
+        return noon
+
+
+def julian_day_end(t: datetime) -> datetime:
+    """
+    Return the end of a Julian day containing a datetime.
+
+    If the given datetime is noon (UTC) or earlier this is noon (UTC) of the given date,
+    otherwise it is noon (UTC) of the following day.
+
+    Parameters
+    ----------
+    t : datetime
+        Datetime (must be timezone-aware).
+
+    Returns
+    -------
+    datetime
+        Default end time.
+
+    """
+
+    if not t.tzinfo:
+        raise ValueError('The datetime must be timezone-aware.')
+
+    t = t.astimezone(pytz.utc)
+    noon = t.replace(hour=12, minute=0, second=0, microsecond=0)
+    if t < noon:
+        return noon
+    else:
+        return noon + timedelta(days=1)

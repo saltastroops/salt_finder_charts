@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import BinaryIO, Generator, Optional, Tuple
 
 import astropy.units as u
+import pytz
 from astropy.units import Quantity
 from dateutil.tz import tzutc
 
@@ -9,7 +10,8 @@ from salt_finder_charts.image import Survey, SurveyImageService
 from salt_finder_charts.mode import Mode, ModeDetails, ImagingModeDetails, \
     LongslitModeDetails, SlotModeDetails, MOSModeDetails
 from salt_finder_charts.output import output_pdf, output_png, OutputFormat
-from salt_finder_charts.util import MagnitudeRange, MOSMask
+from salt_finder_charts.util import MagnitudeRange, MOSMask, julian_day_start, \
+    julian_day_end
 from salt_finder_charts import finder_charts
 from salt_finder_charts.ephemerides import HorizonsEphemerisService, \
     ConstantEphemerisService, EphemerisService
@@ -20,7 +22,6 @@ TimeInterval = Tuple[datetime, datetime]
 def standard_finder_charts(
         # arguments which are always required
         mode: Mode,
-        basic_annotations: bool,
         output_format: OutputFormat,
         # time interval
         start_time: Optional[datetime]=None,
@@ -40,6 +41,7 @@ def standard_finder_charts(
         slitwidth: Optional[Quantity]=None,
         mos_mask_rsmt: Optional[BinaryIO]=None,
         # miscellaneous
+        basic_annotations: bool=False,
         title: Optional[str]=None,
 ) -> Generator[BinaryIO, None, None]:
     """
@@ -101,10 +103,11 @@ def standard_finder_charts(
     # time interval
 
     # get default start and end time if need be
+    now = datetime.now(pytz.utc)
     if not start_time:
-        start_time = _default_start_time()
+        start_time = julian_day_start(now)
     if not end_time:
-        end_time = _default_end_time()
+        end_time = julian_day_end(now)
 
     # ensure there are timezones
     if start_time.tzinfo is None:
@@ -188,51 +191,3 @@ def standard_finder_charts(
                          title=title,
                          basic_annotations=basic_annotations,
                          output = output)
-
-
-def _default_start_time() -> datetime:
-    """
-    Return the default start time.
-
-    If the current time is noon (UTC) or later this is noon (UTC) of the current date,
-    otherwise it is noon (UTC) of the previous day.
-
-    In other words, the start time is the beginning of the current Julian day.
-
-    Returns
-    -------
-    datetime
-        Default start time.
-
-    """
-
-    now = datetime.now(tz=tzutc())
-    noon = now.replace(hour=12, minute=0, second=0, microsecond=0)
-    if now < noon:
-        return noon - timedelta(days=1)
-    else:
-        return noon
-
-
-def _default_end_time() -> datetime:
-    """
-    Return the default end time.
-
-    If the current time is noon (UTC) or earlier this is noon (UTC) of the current date,
-    otherwise it is noon (UTC) of the following day.
-
-    In other words, the end time is the end of the current Julian day.
-
-    Returns
-    -------
-    datetime
-        Default end time.
-
-    """
-
-    now = datetime.now(tz=tzutc())
-    noon = now.replace(hour=12, minute=0, second=0, microsecond=0)
-    if now < noon:
-        return noon
-    else:
-        return noon + timedelta(days=1)
