@@ -1,7 +1,6 @@
-from abc import ABC
 import enum
 from io import BytesIO
-from typing import BinaryIO, Optional
+from typing import BinaryIO
 
 from salt_finder_charts.finder_charts import FinderChart, FinderChartMetadata
 
@@ -14,6 +13,24 @@ class OutputFormat(enum.Enum):
 
     PDF = "PDF"
     PNG = "PNG"
+
+    def extension(self):
+        """
+        The extension to use in filenames of files in this format.
+
+        Returns
+        -------
+        str
+            The file extension.
+
+        """
+
+        if self == OutputFormat.PDF:
+            return "pdf"
+        elif self == OutputFormat.PNG:
+            return "png"
+        else:
+            raise ValueError(f"No file extension defined for output format {self.value}.")
 
 
 def output_pdf(finder_chart: FinderChart, metadata: FinderChartMetadata) -> BinaryIO:
