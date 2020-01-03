@@ -32,6 +32,24 @@ class OutputFormat(enum.Enum):
         else:
             raise ValueError(f"No file extension defined for output format {self.value}.")
 
+    def mime_type(self) -> str:
+        """
+        The MIME type for this output format.
+
+        Returns
+        -------
+        str
+            MIME type
+
+        """
+
+        if self == OutputFormat.PDF:
+            return "application/pdf"
+        elif self == OutputFormat.PNG:
+            return "image/png"
+        else:
+            raise ValueError(f"No MIME type defined for output format {self.value}")
+
 
 def output_pdf(finder_chart: FinderChart, metadata: FinderChartMetadata) -> BinaryIO:
     """
