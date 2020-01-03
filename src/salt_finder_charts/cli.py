@@ -1,12 +1,20 @@
+from typing import Optional, BinaryIO
+
+import astropy.units as u
 import click
+from datetime import datetime
+import os
+import pytz
+from salt_finder_charts import standard_finder_charts
 from salt_finder_charts.image import Survey
 from salt_finder_charts.mode import Mode
 from salt_finder_charts.output import OutputFormat
+from salt_finder_charts.util import julian_day_start, julian_day_end
 
 
 @click.command()
 @click.option('--bandpass', type=str, help='bandpass (such as V) for the magnitudes')
-@click.option('--basename', type='str', default='FinderChart', help='Basename for the saved finder chart files.')
+@click.option('--basename', type=str, default='FinderChart', help='Basename for the saved finder chart files.')
 @click.option('--basic-annotations', is_flag=True, help='add basic annotations only')
 @click.option('--dec', type=str, help='declination of the finder chart center')
 @click.option('--end-time', type=click.DateTime(), help='emd time until which to generate finder charts')
@@ -16,7 +24,6 @@ from salt_finder_charts.output import OutputFormat
 @click.option('--min-magnitude', type=float, help='minimum magnitude of the target')
 @click.option('--mode', type=click.Choice([mode.value for mode in Mode], case_sensitive=False), required=True, help='observation mode')
 @click.option('--mos-mask-rsmt', type=click.File(mode='rb'), help='RSMT file defining a MOS mask')
-@click.option('--name', type=str, default='FinderChart', help='base name for the generated finder chart files')
 @click.option('--output-dir', type=click.Path(exists=True, file_okay=False, writable=True, resolve_path=True), required=True, help='directory where to save the generated finder chart files')
 @click.option('--output-format', type=click.Choice([of.value for of in OutputFormat],case_sensitive=False), default='PDF', help='output format of the generated finder chart files')
 @click.option('--position-angle', type=float, help='position angle in degrees')
@@ -25,7 +32,25 @@ from salt_finder_charts.output import OutputFormat
 @click.option('--start-time', type=click.DateTime(formats=['%Y-%m-%d %H:%M:%S']), help='start time from when to generate finder charts')
 @click.option('--survey', type=click.Choice([survey.value for survey in Survey], case_sensitive=False), default='POSS2/UKSTU Red', help='survey to use for the findder chart image')
 @click.option('--title', type=str, help='title for the finder chart')
-def saltfc(bandpass, basic_annotations, dec, end_time, horizons_id, horizons_stepsize, max_magnitude, min_magnitude, mode, mos_mask_rsmt, name, output_dir, output_format, position_angle, ra, slitwidth, start_time, survey, title):
+def saltfc(bandpass: Optional[str],
+           basename: str,
+           basic_annotations: Optional[bool],
+           dec: Optional[float],
+           end_time: Optional[datetime],
+           horizons_id:Optional[str],
+           horizons_stepsize: Optional[int],
+           max_magnitude: Optional[float],
+           min_magnitude: Optional[float],
+           mode: str,
+           mos_mask_rsmt: Optional[BinaryIO],
+           output_dir: str,
+           output_format: str,
+           position_angle: Optional[float],
+           ra: Optional[float],
+           slitwidth: Optional[float],
+           start_time: Optional[datetime],
+           survey,
+           title):
     """
     Command for generating SALT finder charts.
 
@@ -39,4 +64,56 @@ def saltfc(bandpass, basic_annotations, dec, end_time, horizons_id, horizons_ste
 
     """
 
-    click.echo("HELLO")
+    # start and end time
+    if start_time:
+        _start_time = pytz.utc.localize(start_time)
+    else:
+        _start_time = julian_day_start(datetime.now(pytz.utc))
+    if end_time:
+        _end_time = pytz.utc.localize(end_time)
+    else:
+        _end_time = julian_day_end(datetime.now(pytz.utc))
+
+    # finder chart center
+    _ra = ra * u.deg if ra is not None else None
+    _dec = dec * u.deg if dec else None
+
+    # mode
+    _mode = [m for m in Mode if m.value.lower() == mode.lower()][0]
+
+    # output
+    _output_format = [of for of in OutputFormat if of.value.lower() == output_format.lower()][0]
+
+    # survey
+    _survey = [s for s in Survey if s.value.lower() == survey.lower()][0]
+
+    # slit width
+    _slitwidth = slitwidth * u.arcsec if slitwidth is not None else None
+
+    # Horizons query stepsize
+    _horizons_stepsize = horizons_stepsize * u.minute if horizons_stepsize is not None else None
+
+    # generate the finder charts
+    counter = 1
+    for fc in standard_finder_charts(mode=_mode,
+                                     output_format=_output_format,
+                                     start_time=_start_time,
+                                     end_time=_end_time,
+                                     ra=_ra,
+                                     dec=_dec,
+                                     min_magnitude=min_magnitude,
+                                     max_magnitude=max_magnitude,
+                                     bandpass=bandpass,
+                                     horizons_id=horizons_id,
+                                     horizons_stepsize=_horizons_stepsize,
+                                     survey=_survey,
+                                     position_angle=position_angle,
+                                     slitwidth=_slitwidth,
+                                     mos_mask_rsmt=mos_mask_rsmt,
+                                     basic_annotations=basic_annotations,
+                                     title=title):
+        filename = f"{basename}-{counter}.{_output_format.extension()}"
+        counter += 1
+        filepath = os.path.join(output_dir, filename)
+        with open(filepath, 'wb') as f:
+            f.write(fc.read())
