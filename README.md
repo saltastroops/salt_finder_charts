@@ -16,82 +16,184 @@ pip install salt_finder_charts
 
 ## Usage
 
-You can generate a finder chart with the `finder_chart` function.
+You can generate finder charts with the `standard_finder_chart` function. This returns a generator of binary streams containing the finder charts. For example, this is how you would generate finder charts for a longslit observation of an 18th magnitude target.
 
 ```python
-from salt_finder_charts import finder_chart, Mode, Survey, Target
+import astropy.units as u
+from salt_finder_charts import standard_finder_charts
+from salt_finder_charts.mode import Mode
+from salt_finder_charts.output import OutputFormat
 
-# Replace with a file path of your choice.
-# The file extension must be one of those supported by the Pillow package.
-out = "/path/to/finder_chart.png"
-
-target = Target(ra=189.99763271, dec=-11.62305428, name="Sombrero Galaxy")
-fc = finder_chart(target=target, mode=Mode.IMAGING, pa=15, survey=Survey.POSS2UKSTU_RED)
-fc.save(out)
+fcs = standard_finder_charts(
+    bandpass="V",
+    dec=-27.63792 * u.deg,
+    max_magnitude=18,
+    min_magnitude=18,
+    mode=Mode.LONGSLIT,
+    output_format=OutputFormat.PDF,
+    position_angle=0 * u.deg,
+    ra=78.6568723 * u.deg,
+    slitwidth=2 * u.arcsec,
+    title="Test Finding Chart"
+)
 ```
 
-The function takes a mode, target details, a position angle and (optionally) a survey as its arguments and returns an `Image` object. Refer to the [documentation for the Pillow package](https://pillow.readthedocs.io/en/stable/) for details on how to use this object.
+Why a generator? Isn't there a single finder chart only? Usually that's true. However, in case of an asteroid you may get multiple finder charts, in particular if the considered time interval covers multiple nights.
 
-The generated finder chart image contains RGBA data. Depending on your needs, you might have to [convert it to RGB data](https://stackoverflow.com/questions/50763236/converting-png-to-pdf-with-pil-save-mode-error). For example, you would have extend the above example for saving the finder chart as a pdf.
+Saving the generated finder charts to disk is fairly straightforward.
 
 ```python
+counter = 1
+for fc in fcs:
+    with open(f"FindingChart-{counter}.pdf", "wb") as f:
+        f.write(fc.read())
+        counter += 1
+``` 
+
+If you are certain there is only one finder chart, you could just use `next()` to get it.
+
+```python
+fc = next(fcs)
+```
+
+Here is how you could view finder charts for an asteroid. Note that both the pytz and the Pillow library must have been installed, and that you have to hit enter for moving to the next finder chart.
+
+```python
+from datetime import datetime
 from PIL import Image
-from salt_finder_charts import finder_chart, Mode, Survey, Target
 
-# Replace with a file path of your choice.
-# The file extension must be one of those supported by the Pillow package.
-out = "/path/to/finder_chart.pdf"
+import pytz
+import astropy.units as u
+from salt_finder_charts import standard_finder_charts
+from salt_finder_charts.mode import Mode
+from salt_finder_charts.output import OutputFormat
 
-target = Target(ra=189.99763271, dec=-11.62305428, name="Sombrero Galaxy")
-fc = finder_chart(target=target, mode=Mode.IMAGING, pa=15, survey=Survey.POSS2UKSTU_RED)
-rgb = Image.new('RGB', fc.size, (255, 255, 255))  # white background
-rgb.paste(fc, mask=fc.split()[3])                 # paste using alpha channel as mask
-rgb.save(out)
+utc = pytz.timezone("UTC")
+start = utc.localize(datetime(2019, 6, 28, 11, 31, 0))
+end = utc.localize(datetime(2019, 6, 29, 12, 31, 0))
+
+for fc in standard_finder_charts(
+    mode=Mode.IMAGING,
+    horizons_id='54827',
+    start_time=start,
+    end_time=end,
+    slitwidth=2 * u.arcsec,
+    basic_annotations=False,
+    output_format=OutputFormat.PNG
+):
+    image = Image.open(fc)
+    image.show()
+    input('Press enter to continue')
+    image.close()
 ```
 
-## Input arguments
+The `standard_finder_charts` function accepts the following arguments.
 
-The `finder_chart` function expects target details, a mode, a position angle and (optionally) a survey as its input arguments.
-
-### Target
-
-The target details should be supplied as an instance of the `Target` class. This is a named tuple with the following properties.
-
-Property | Explanation | Example
+Argument | Description | Default
 --- | --- | ---
-`dec` | Declination, in degrees between -90 and 90 | `16.9235`
-`name` | Target name | `"My Interesting Target"`
-`ra` | Right ascension, in degrees between 0 and 360 | `-57.36229`
+bandpass | Bandpass for the magnitudes, such as V.
+basic_annotations | Whether to add basic annotations only. | False
+dec | Declination of the finder chart center, as an angle between -90 and 90 degrees.
+end_time | End time until which to generate finder charts. This is only relevant for non-sidereal targets. Must be timezone-aware. | End of the current Julian day
+horizons_id | Identifier for the Horizons service.
+horizons_stepsize | Time between ephemerides queried from the Horizons service | 5 minutes
+max_magnitude | Maximum magnitude
+min_magnitude | Minimum magnitude for the target.
+mode | Observation mode, such as imaging or longslit.
+mos_mask_rsmt | Binary stream containing an RSMT MOS mask definition file.
+output_format | Output format of the generated finder charts, such as PDF. | `OutputFormat.PDF`
+position_angle | Position angle. | Generally 0&deg; or, if appropriate, chosen to allow for easier acquisition.
+ra | Right ascension of the finder chart center, as an angle between 0 and 360 degrees.
+slitwidth | Slit width, as an angle.
+start_time | Start time from which to generate finder charts. This is only relevant for non-sidereal targets. | Start of the current Julian day. Must be timezone-aware.
+survey | Survey from which to get the finder chart image.  | `Survey.POSS2UKSTU_RED`
+title | Title of the finder chart.
 
-The target name is included in the finder chart's title.
+Which of these arguments are required depends on the combination of arguments used. Also, some arguments may be ignored when used with others. For example, the slit width won;t be used if the observing mode is imaging.
 
-### Mode
+While normally you wouldn't have to use it, the `salt_finder_charts` package also offers a `finder_charts` function which lets you customise some aspects of the finder chart generation.
 
-The mode should be one of the enumeration members of the `Mode` enumeration, as listed in the following table.
+For example, you could create the same longslit observation finder charts as above with the following code.
 
-Enumeration value | Explanation
---- | ---
-`Mode.IMAGING` | An imaging observation.
+```python
+import astropy.units as u
+from salt_finder_charts import finder_charts
+from salt_finder_charts.ephemerides import ConstantEphemerisService
+from salt_finder_charts.image import SurveyImageService, Survey
+from salt_finder_charts.mode import LongslitModeDetails
+from salt_finder_charts.output import output_pdf
+from salt_finder_charts.util import MagnitudeRange
 
-### Position angle
+magnitude_range = MagnitudeRange(bandpass="V", max_magnitude=18, min_magnitude=18)
+ephemeris_service = ConstantEphemerisService(
+    ra=78.6568723 * u.deg,
+    dec=-27.63792 * u.deg,
+    magnitude_range=magnitude_range
+)
+image_service = SurveyImageService(Survey.POSS2UKSTU_RED)
+mode_details = LongslitModeDetails(slitwidth=2 * u.arcsec, pa=0 * u.deg)
+fcs = finder_charts(
+    ephemeris_service=ephemeris_service,
+    image_service=image_service,
+    mode_details=mode_details,
+    output=output_pdf,
+    title="test Finding Chart"
+)
+```
 
-The position angle must be a valid angle in degrees.
+Like the `standard_finder_charts` function, `finder_charts` returns a generator of binary streams with the finder charts. It uses the following arguments.
 
-### Survey
+Argument | Description | Default
+--- | --- | ---
+basic_annotations | Whether to add basic annotations only. | False
+end_time | End time until which to generate finder charts. This is only relevant for non-sidereal targets. Must be timezone-aware. | End of the current Julian day
+ephemeris_service | Service for getting ephemerides.
+image_service | Service for getting finder chart images.
+mode_details | Observing mode and its details
+output | Function for converting a finding chart into an output format such as pdf.
+start_time | Start time from which to generate finder charts. This is only relevant for non-sidereal targets.  Must be timezone-aware. | Start of the current Julian day.
+title | Title for the finder chart.
 
-The survey should be one of the enumeration members of the `Survey` enumeration. The following surveys are available.
+## Command-line interface
 
-Enumeration value | Survey
---- | ---
-`Survey.POSS1_BLUE` | POSS1 Blue
-`Survey.POSS1_RED` | POSS1 Red
-`Survey.POSS2UKSTU_BLUE` | POSS2/UKSTU Blue
-`Survey.POSS2UKSTU_IR` | POSS2/UKSTU IR
-`Survey.POSS2UKSTU_RED` | POSS2/UKSTU Red
-`Survey.TWO_MASS_H` | 2MASS-H
-`Survey.TWO_MASS_J` | 2MASS-J
-`Survey.TWO_MASS_K` | 2MASS-K
+For convenience, a command `saltfc` is provided, which you can run in a terminal. It saves the generated finding charts in a directory. The filename of the generated files consists of a basename (such as `FinderChart`) followed by a dash and a running number. The basename can be customised with a command line option. Existing files are replaced without warning,
 
-The POSS2/UKSTU Red survey is used if no survey is supplied.
+For example, you can generate finder charts for an asteroid by running the following command in a terminal.
 
-Not all of the surveys cover all of the declinations observable with SALT, and you may get cryptic errors if you try to use a survey with a target position not covered by it. As such it is advisable to use the default whenever possible.
+```bash
+saltfc \
+    --output-dir /tmp \
+    --basename "Asteroid_54827" \
+    --mode imaging \
+    --horizons-id 54827 \
+    --start-time "2019-06-28 11:31:00" \
+    --end-time "2019-06-29 12:31:00" \
+    --slitwidth 2 \
+    --output-format PDF
+```
+
+The command line options for `saltfc` are essentially the same as the arguments for the `standard_finder_charts` function, plus options for customising the file base name and setting the output directory.
+
+Argument | Description | Default
+--- | --- | ---
+--bandpass | Bandpass for the magnitudes, such as V.
+--basename | Basename for the saved finder chart files | FinderChart
+--basic_annotations | Add basic annotations only. | False
+--dec | Declination of the finder chart center, as an angle between -90 and 90 degrees, in degrees.
+--end_time | End time until which to generate finder charts. This is only relevant for non-sidereal targets. The time is supposed to be in UTC. | End of the current Julian day
+--horizons_id | Identifier for the Horizons service.
+--horizons_stepsize | Minutes between ephemerides queried from the Horizons service | 5
+--max_magnitude | Maximum magnitude for the target
+--min_magnitude | Minimum magnitude for the target.
+--mode | Observation mode, such as imaging or longslit.
+--mos_mask_rsmt | RSMT MOS mask file
+--output-dir | Directory where to store the generated finder chart files.
+--output_format | Output format of the generated finder charts, such as PDF. | PDF
+--position_angle | Position angle, in degrees. | Generally 0 or, if appropriate, chosen to allow for easier acquisition.
+--ra | Right ascension of the finder chart center, as an angle between 0 and 360 degrees, in degrees.
+--slitwidth | Slit width, as an angle in arcseconds.
+--start_time | Start time from which to generate finder charts. This is only relevant for non-sidereal targets. | Start of the current Julian day. The time is supposed to be in UTC.
+--survey | Survey from which to get the finder chart image.  | `Survey.POSS2UKSTU_RED`
+--title | Title of the finder chart.
+
+Both the start and end time use the format `yyyy-mm-dd hh:mm:ss`. For example, valid values are `2019-01-25 9:45:16'` or `2020-01-02 12:00:00`.
