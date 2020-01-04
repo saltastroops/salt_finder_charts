@@ -13,6 +13,7 @@ class OutputFormat(enum.Enum):
 
     PDF = "PDF"
     PNG = "PNG"
+    SVG = "SVG"
 
     def extension(self):
         """
@@ -29,6 +30,8 @@ class OutputFormat(enum.Enum):
             return "pdf"
         elif self == OutputFormat.PNG:
             return "png"
+        elif self == OutputFormat.SVG:
+            return "svg"
         else:
             raise ValueError(f"No file extension defined for output format {self.value}.")
 
@@ -47,6 +50,8 @@ class OutputFormat(enum.Enum):
             return "application/pdf"
         elif self == OutputFormat.PNG:
             return "image/png"
+        elif self == OutputFormat.SVG:
+            return "image/svg+xml"
         else:
             raise ValueError(f"No MIME type defined for output format {self.value}")
 
@@ -94,4 +99,27 @@ def output_png(finder_chart: FinderChart, metadata: FinderChartMetadata) -> Bina
 
     out = BytesIO()
     finder_chart.plot.save(out, format="png")
+    return out
+
+
+def output_svg(finder_chart: FinderChart, metadata: FinderChartMetadata) -> BinaryIO:
+    """
+    Generate a binary stream with a PDF document containing the given finder chart.
+
+    Parameters
+    ----------
+    finder_chart : FinderChart
+        Finding chart.
+    metadata : FinderChartMetadata
+        Finding chart metadata.
+
+    Returns
+    -------
+    BytesIO
+        A binary stream containing a PDF document with the finder chart.
+
+    """
+
+    out = BytesIO()
+    finder_chart.plot.save(out, format="svg")
     return out

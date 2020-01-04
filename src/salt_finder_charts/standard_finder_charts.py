@@ -4,12 +4,11 @@ from typing import BinaryIO, Generator, Optional, Tuple
 import astropy.units as u
 import pytz
 from astropy.units import Quantity
-from dateutil.tz import tzutc
 
 from salt_finder_charts.image import Survey, SurveyImageService
 from salt_finder_charts.mode import Mode, ModeDetails, ImagingModeDetails, \
     LongslitModeDetails, SlotModeDetails, MOSModeDetails
-from salt_finder_charts.output import output_pdf, output_png, OutputFormat
+from salt_finder_charts.output import output_pdf, output_png, output_svg, OutputFormat
 from salt_finder_charts.util import MagnitudeRange, MOSMask, julian_day_start, \
     julian_day_end
 from salt_finder_charts import finder_charts
@@ -179,6 +178,8 @@ def standard_finder_charts(
         output = output_pdf
     elif output_format == OutputFormat.PNG:
         output = output_png
+    elif output_format == OutputFormat.SVG:
+        output = output_svg
     else:
         raise ValueError(f'Output format unsupported: {output_format.value}')
 
