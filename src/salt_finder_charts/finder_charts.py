@@ -707,10 +707,10 @@ def finder_charts(
     ephemeris_service: EphemerisService,
     image_service: ImageService,
     output: Callable[[FinderChart, FinderChartMetadata], BinaryIO],
-        title: str = None,
-        start_time: datetime = None,
-        end_time: datetime = None,
-        basic_annotations: bool = False
+    title: str = None,
+    start_time: datetime = None,
+    end_time: datetime = None,
+    basic_annotations: bool = False,
 ) -> Generator[BinaryIO, None, None]:
     FOV_RADIUS = 3 * u.arcmin
 

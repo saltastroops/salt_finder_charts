@@ -33,7 +33,9 @@ class OutputFormat(enum.Enum):
         elif self == OutputFormat.SVG:
             return "svg"
         else:
-            raise ValueError(f"No file extension defined for output format {self.value}.")
+            raise ValueError(
+                f"No file extension defined for output format {self.value}."
+            )
 
     def mime_type(self) -> str:
         """

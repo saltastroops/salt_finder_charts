@@ -181,7 +181,7 @@ def julian_day_start(t: datetime) -> datetime:
     """
 
     if not t.tzinfo:
-        raise ValueError('The datetime must be timezone-aware.')
+        raise ValueError("The datetime must be timezone-aware.")
 
     t = t.astimezone(pytz.utc)
     noon = t.replace(hour=12, minute=0, second=0, microsecond=0)
@@ -211,7 +211,7 @@ def julian_day_end(t: datetime) -> datetime:
     """
 
     if not t.tzinfo:
-        raise ValueError('The datetime must be timezone-aware.')
+        raise ValueError("The datetime must be timezone-aware.")
 
     t = t.astimezone(pytz.utc)
     noon = t.replace(hour=12, minute=0, second=0, microsecond=0)
