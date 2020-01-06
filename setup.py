@@ -14,6 +14,7 @@ requirements = [
     'ephem',
     'numpy',
     'pillow',
+    'pyregion',
     'pytz',
 ]
 
