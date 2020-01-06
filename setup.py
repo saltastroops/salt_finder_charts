@@ -14,6 +14,7 @@ requirements = [
     'ephem',
     'numpy',
     'pillow',
+    'PyPDF2',
     'pyregion',
     'pytz',
 ]
