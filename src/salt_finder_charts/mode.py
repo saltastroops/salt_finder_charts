@@ -1,11 +1,11 @@
 import enum
 from abc import ABC
-from typing import Any, Optional, BinaryIO
+from typing import Any, Optional
 
 import astropy.units as u
 from astropy.units import Quantity
 
-from salt_finder_charts.util import MOSMask
+from salt_finder_charts.util import MOSMask, Metadata
 
 
 class Mode(enum.Enum):
@@ -52,6 +52,19 @@ class ModeDetails(ABC):
 
         raise NotImplementedError
 
+    def metadata(self) -> Metadata:
+        """
+        Metadata characterising these mode details.
+
+        Returns
+        -------
+        Metadata
+            Metadata for these mode details.
+
+        """
+
+        raise NotImplementedError
+
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         """
         Add the mode specific content to a finder chart.
@@ -83,6 +96,11 @@ class ImagingModeDetails(ModeDetails):
 
     def position_angle(self) -> Quantity:
         return self.pa
+
+    def metadata(self) -> Metadata:
+        return {
+            'position_angle': f"{self.pa.to_value(u.deg)} degrees"
+        }
 
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         # indicate field of view for BVIT
@@ -120,6 +138,11 @@ class SlotModeDetails(ModeDetails):
     def position_angle(self) -> Quantity:
         return self.pa
 
+    def metadata(self) -> Metadata:
+        return {
+            'position_angle': f"{self.pa.to_value(u.deg)} degrees"
+        }
+
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         finder_chart.draw_centered_rectangle(
             self.pa + 90 * u.deg,
@@ -154,6 +177,12 @@ class LongslitModeDetails(ModeDetails):
     def position_angle(self) -> Quantity:
         return self.pa
 
+    def metadata(self) -> Metadata:
+        return {
+            'position_angle': f"{self.pa.to_value(u.deg)} deg",
+            'slitwidth': f"{self.slitwidth.to_value(u.arcsec)} arcsec"
+        }
+
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         # draw the slit
         finder_chart.draw_centered_rectangle(
@@ -185,6 +214,11 @@ class MOSModeDetails(ModeDetails):
 
     def position_angle(self) -> Quantity:
         return self.mos_mask.position_angle
+
+    def metadata(self) -> Metadata:
+        return {
+            'mask_xml': self.mos_mask.xml
+        }
 
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         # draw the slits

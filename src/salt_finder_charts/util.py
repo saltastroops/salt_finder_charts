@@ -1,11 +1,22 @@
+from abc import ABC
 from datetime import datetime, timedelta
-from typing import List, NamedTuple, BinaryIO
+from typing import Any, Dict, List, NamedTuple, BinaryIO
 import zipfile
 
 import astropy.units as u
 from astropy.units import Quantity
 from defusedxml.minidom import parseString
 import pytz
+
+
+"""
+Metadata.
+
+Any Metadata instance must be JSON-serializable.
+
+"""
+
+Metadata = Dict[str, Any]
 
 
 class MagnitudeRange(NamedTuple):
@@ -97,9 +108,9 @@ class MOSMask:
     def __init__(self, rsmt: BinaryIO):
         # extract the MOS mask definition from the RSMT file
         mos_zip = zipfile.ZipFile(rsmt)
-        mos_xml = mos_zip.read("Slitmask.xml").decode("UTF-8")
+        self.xml = mos_zip.read("Slitmask.xml").decode("UTF-8")
         mos_zip.close()
-        doc = parseString(mos_xml)
+        doc = parseString(self.xml)
 
         # extract the mask position and rotation angle
         parameter_elenents = doc.getElementsByTagName("parameter")

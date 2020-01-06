@@ -11,9 +11,9 @@ from typing import Any, BinaryIO, Callable, Generator, List, NamedTuple, Tuple, 
 from salt_finder_charts import __version__
 from salt_finder_charts.ephemerides import EphemerisService, Ephemeris
 from salt_finder_charts.image import ImageService
-from salt_finder_charts.mode import ModeDetails
+from salt_finder_charts.mode import ModeDetails, Mode
 from salt_finder_charts import visibility
-from salt_finder_charts.util import julian_day_start, julian_day_end
+from salt_finder_charts.util import julian_day_start, julian_day_end, Metadata
 
 
 class FinderChartMetadata(NamedTuple):
@@ -34,6 +34,10 @@ class FinderChartMetadata(NamedTuple):
         Start time from which the finder chart is valid.
     end_time : datetime
         End time until which the finder chart is valid.
+    mode : Mode
+        Observing mode.
+    mode_metadata : Metadata
+        Metadata for the observing mode.
 
     """
 
@@ -43,6 +47,8 @@ class FinderChartMetadata(NamedTuple):
     position_angle: Quantity
     start_time: datetime
     end_time: datetime
+    mode: Mode
+    mode_metadata: Metadata
 
 
 class FinderChart:
@@ -110,6 +116,8 @@ class FinderChart:
             position_angle=self.pa,
             start_time=self.start_time,
             end_time=self.end_time,
+            mode=self.mode_details.mode,
+            mode_metadata=self.mode_details.metadata()
         )
 
     def discard(self) -> None:
