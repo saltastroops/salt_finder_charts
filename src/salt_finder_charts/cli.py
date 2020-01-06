@@ -21,7 +21,7 @@ from salt_finder_charts.util import julian_day_start, julian_day_end
     help="Basename for the saved finder chart files.",
 )
 @click.option("--basic-annotations", is_flag=True, help="add basic annotations only")
-@click.option("--dec", type=str, help="declination of the finder chart center")
+@click.option("--dec", type=float, help="declination of the finder chart center")
 @click.option(
     "--end-time",
     type=click.DateTime(),
@@ -58,7 +58,7 @@ from salt_finder_charts.util import julian_day_start, julian_day_end
     help="output format of the generated finder chart files",
 )
 @click.option("--position-angle", type=float, help="position angle in degrees")
-@click.option("--ra", type=str, help="right ascension of the finder chart center")
+@click.option("--ra", type=float, help="right ascension of the finder chart center")
 @click.option("--slitwidth", type=float, help="slit width in arcseconds")
 @click.option(
     "--start-time",
