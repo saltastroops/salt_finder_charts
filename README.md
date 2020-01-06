@@ -168,7 +168,6 @@ saltfc \
     --horizons-id 54827 \
     --start-time "2019-06-28 11:31:00" \
     --end-time "2019-06-29 12:31:00" \
-    --slitwidth 2 \
     --output-format PDF
 ```
 
