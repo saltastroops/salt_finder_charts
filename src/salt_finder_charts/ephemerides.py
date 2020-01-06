@@ -9,7 +9,7 @@ from astroquery.jplhorizons import Horizons
 from dateutil.parser import parse
 from dateutil.tz import tzutc
 
-from salt_finder_charts.util import MagnitudeRange
+from salt_finder_charts.util import MagnitudeRange, Metadata
 
 
 class Ephemeris(NamedTuple):
@@ -180,6 +180,19 @@ class EphemerisService(ABC):
             min_magnitude=min_magnitude, max_magnitude=max_magnitude, bandpass=bandpass
         )
 
+    def metadata(self) -> Metadata:
+        """
+        Metadata characterising this ephemeris service.
+
+        Returns
+        -------
+        Metadata
+            Metadata for the ephemeris service.
+
+        """
+
+        raise NotImplementedError
+
 
 def _cover_time_interval(
     ephemerides: List[Ephemeris], start_time: datetime, end_time: datetime
@@ -269,6 +282,9 @@ class ConstantEphemerisService(EphemerisService):
     def is_sidereal_target(self) -> bool:
         return True
 
+    def metadata(self) -> Metadata:
+        return dict()
+
 
 class HorizonsEphemerisService(EphemerisService):
     """
@@ -308,15 +324,17 @@ class HorizonsEphemerisService(EphemerisService):
             raise ValueError("The start and end time must be timezone-aware.")
 
         # avoid overly excessive queries
-        if stepsize < 5 * u.minute:
+        self.stepsize = stepsize
+        if self.stepsize < 5 * u.minute:
             raise ValueError("The sampling interval must be at least 5 minutes.")
 
         # query Horizons
+        self.object_id = object_id
         start = start_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
         stop = end_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
         step = f"{round(stepsize.to_value(u.minute))}m"
         obj = Horizons(
-            id=object_id,
+            id=self.object_id,
             location=SALT_OBSERVATORY_ID,
             epochs={"start": start, "stop": stop, "step": step},
         )
@@ -353,3 +371,10 @@ class HorizonsEphemerisService(EphemerisService):
 
     def is_sidereal_target(self) -> bool:
         return False
+
+    def metadata(self) -> Metadata:
+        return {
+            'horizons_id': self.object_id,
+            'horizons_stepsize': f"{self.stepsize.to_value(u.min)} min"
+        }
+

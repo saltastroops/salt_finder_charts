@@ -98,9 +98,7 @@ class ImagingModeDetails(ModeDetails):
         return self.pa
 
     def metadata(self) -> Metadata:
-        return {
-            'position_angle': f"{self.pa.to_value(u.deg)} degrees"
-        }
+        return {}
 
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         # indicate field of view for BVIT
@@ -139,9 +137,7 @@ class SlotModeDetails(ModeDetails):
         return self.pa
 
     def metadata(self) -> Metadata:
-        return {
-            'position_angle': f"{self.pa.to_value(u.deg)} degrees"
-        }
+        return {}
 
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         finder_chart.draw_centered_rectangle(
@@ -179,7 +175,6 @@ class LongslitModeDetails(ModeDetails):
 
     def metadata(self) -> Metadata:
         return {
-            'position_angle': f"{self.pa.to_value(u.deg)} deg",
             'slitwidth': f"{self.slitwidth.to_value(u.arcsec)} arcsec"
         }
 

@@ -59,7 +59,8 @@ class FinderChart:
 
         self.start_time = start_time
         self.end_time = end_time
-        self.ephemerides = ephemeris_service.ephemerides(start_time, end_time)
+        self.ephemeris_service = ephemeris_service
+        self.ephemerides = self.ephemeris_service.ephemerides(start_time, end_time)
         self.ra, self.dec = EphemerisService.center_position(self.ephemerides)
         self.pa = mode_details.position_angle()
         self.magnitude_range = EphemerisService.find_magnitude_range(self.ephemerides)
@@ -78,11 +79,15 @@ class FinderChart:
             version=__version__,
             right_ascension=f"{self.ra.to_value(u.deg)} deg",
             declination=f"{self.dec.to_value(u.deg)} deg",
+            min_magnitude=self.magnitude_range.min_magnitude if self.magnitude_range else None,
+            max_magnitude=self.magnitude_range.max_magnitude if self.magnitude_range else None,
+            bandpass=self.magnitude_range.bandpass if self.magnitude_range else None,
             position_angle=f"{self.pa.to_value(u.deg)} deg",
             start_time=self.start_time.isoformat(),
             end_time=self.end_time.isoformat(),
             mode=self.mode_details.mode.value,
-            mode_metadata=self.mode_details.metadata()
+            mode_metadata=self.mode_details.metadata(),
+            ephemeris_metadata=self.ephemeris_service.metadata(),
         )
 
     def discard(self) -> None:
