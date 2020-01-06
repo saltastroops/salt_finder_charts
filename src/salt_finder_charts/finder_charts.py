@@ -16,41 +16,6 @@ from salt_finder_charts import visibility
 from salt_finder_charts.util import julian_day_start, julian_day_end, Metadata
 
 
-class FinderChartMetadata(NamedTuple):
-    """
-    Metadata for a finder chart.
-
-    Fields
-    ------
-    version: str
-        Version of the Finding Chart Tool.
-    right_ascension : Quantity
-        Right ascension of the finder chart's center, as an angle.
-    declination : Quantity
-        Declination of the finder chart's center, as an angle.
-    position_angle : Quantity
-        Position angle used in the finder chart.
-    start_time : datetime
-        Start time from which the finder chart is valid.
-    end_time : datetime
-        End time until which the finder chart is valid.
-    mode : Mode
-        Observing mode.
-    mode_metadata : Metadata
-        Metadata for the observing mode.
-
-    """
-
-    version: str
-    right_ascension: Quantity
-    declination: Quantity
-    position_angle: Quantity
-    start_time: datetime
-    end_time: datetime
-    mode: Mode
-    mode_metadata: Metadata
-
-
 class FinderChart:
     """
     A finder chart for SALT.
@@ -108,15 +73,15 @@ class FinderChart:
             self._draw_ephemeris_info()
 
     @property
-    def metadata(self) -> FinderChartMetadata:
-        return FinderChartMetadata(
+    def metadata(self) -> Metadata:
+        return dict(
             version=__version__,
-            right_ascension=self.ra,
-            declination=self.dec,
-            position_angle=self.pa,
-            start_time=self.start_time,
-            end_time=self.end_time,
-            mode=self.mode_details.mode,
+            right_ascension=f"{self.ra.to_value(u.deg)} deg",
+            declination=f"{self.dec.to_value(u.deg)} deg",
+            position_angle=f"{self.pa.to_value(u.deg)} deg",
+            start_time=self.start_time.isoformat(),
+            end_time=self.end_time.isoformat(),
+            mode=self.mode_details.mode.value,
             mode_metadata=self.mode_details.metadata()
         )
 
@@ -714,7 +679,7 @@ def finder_charts(
     mode_details: ModeDetails,
     ephemeris_service: EphemerisService,
     image_service: ImageService,
-    output: Callable[[FinderChart, FinderChartMetadata], BinaryIO],
+    output: Callable[[FinderChart, Metadata], BinaryIO],
     title: str = None,
     start_time: datetime = None,
     end_time: datetime = None,

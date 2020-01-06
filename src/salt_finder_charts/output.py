@@ -1,8 +1,11 @@
 import enum
+import json
 from io import BytesIO
 from typing import BinaryIO
 
-from salt_finder_charts.finder_charts import FinderChart, FinderChartMetadata
+import PyPDF2
+from salt_finder_charts.finder_charts import FinderChart
+from salt_finder_charts.util import Metadata
 
 
 class OutputFormat(enum.Enum):
@@ -58,7 +61,7 @@ class OutputFormat(enum.Enum):
             raise ValueError(f"No MIME type defined for output format {self.value}")
 
 
-def output_pdf(finder_chart: FinderChart, metadata: FinderChartMetadata) -> BinaryIO:
+def output_pdf(finder_chart: FinderChart, metadata: Metadata) -> BinaryIO:
     """
     Generate a binary stream with a PDF document containing the given finder chart.
 
@@ -78,10 +81,21 @@ def output_pdf(finder_chart: FinderChart, metadata: FinderChartMetadata) -> Bina
 
     out = BytesIO()
     finder_chart.plot.save(out, format="pdf")
-    return out
+
+    pdf = PyPDF2.PdfFileReader(out)
+    writer = PyPDF2.PdfFileWriter()
+    writer.addAttachment('salt_finder_charts', json.dumps(metadata).encode('UTF-8'))
+
+    writer.addPage(pdf.getPage(0))
+    bytes_stream = BytesIO()
+    writer.write(bytes_stream)
+
+    bytes_stream.seek(0)
+
+    return bytes_stream
 
 
-def output_png(finder_chart: FinderChart, metadata: FinderChartMetadata) -> BinaryIO:
+def output_png(finder_chart: FinderChart, metadata: Metadata) -> BinaryIO:
     """
     Generate a binary stream with a PDF document containing the given finder chart.
 
@@ -104,7 +118,7 @@ def output_png(finder_chart: FinderChart, metadata: FinderChartMetadata) -> Bina
     return out
 
 
-def output_svg(finder_chart: FinderChart, metadata: FinderChartMetadata) -> BinaryIO:
+def output_svg(finder_chart: FinderChart, metadata: Metadata) -> BinaryIO:
     """
     Generate a binary stream with a PDF document containing the given finder chart.
 
