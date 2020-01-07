@@ -69,7 +69,7 @@ from salt_finder_charts.util import julian_day_start, julian_day_end
     "--survey",
     type=click.Choice([survey.value for survey in Survey], case_sensitive=False),
     default="POSS2/UKSTU Red",
-    help="survey to use for the findder chart image",
+    help="survey to use for the finder chart image",
 )
 @click.option("--title", type=str, help="title for the finder chart")
 @click.version_option(__version__)
