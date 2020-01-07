@@ -5,7 +5,7 @@ import click
 from datetime import datetime
 import os
 import pytz
-from salt_finder_charts import standard_finder_charts
+from salt_finder_charts import standard_finder_charts, __version__
 from salt_finder_charts.image import Survey
 from salt_finder_charts.mode import Mode
 from salt_finder_charts.output import OutputFormat
@@ -72,6 +72,7 @@ from salt_finder_charts.util import julian_day_start, julian_day_end
     help="survey to use for the findder chart image",
 )
 @click.option("--title", type=str, help="title for the finder chart")
+@click.version_option(__version__)
 def saltfc(
     bandpass: Optional[str],
     basename: str,
@@ -92,6 +93,7 @@ def saltfc(
     start_time: Optional[datetime],
     survey,
     title,
+        version
 ):
     """
     Command for generating SALT finder charts.
