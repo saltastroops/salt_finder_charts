@@ -121,6 +121,9 @@ def saltfc(
     _ra = ra * u.deg if ra is not None else None
     _dec = dec * u.deg if dec else None
 
+    # position angle
+    _position_angle = position_angle * u.deg if position_angle is not None else None
+
     # mode
     _mode = [m for m in Mode if m.value.lower() == mode.lower()][0]
 
@@ -155,7 +158,7 @@ def saltfc(
         horizons_id=horizons_id,
         horizons_stepsize=_horizons_stepsize,
         survey=_survey,
-        position_angle=position_angle,
+        position_angle=_position_angle,
         slitwidth=_slitwidth,
         mos_mask_rsmt=mos_mask_rsmt,
         basic_annotations=basic_annotations,

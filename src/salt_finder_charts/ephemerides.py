@@ -332,7 +332,10 @@ class HorizonsEphemerisService(EphemerisService):
         self.object_id = object_id
         start = start_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
         stop = end_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
-        step = f"{round(stepsize.to_value(u.minute))}m"
+        # Horizons requires an int for the step size. As round() might call NumPy's
+        # round method and thus produce a float, we have to round "manually" using
+        # the int function.
+        step = f"{int(0.5 + stepsize.to_value(u.minute))}m"
         obj = Horizons(
             id=self.object_id,
             location=SALT_OBSERVATORY_ID,
