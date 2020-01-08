@@ -92,8 +92,7 @@ def saltfc(
     slitwidth: Optional[float],
     start_time: Optional[datetime],
     survey,
-    title,
-        version
+    title
 ):
     """
     Command for generating SALT finder charts.
