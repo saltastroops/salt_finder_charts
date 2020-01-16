@@ -5,7 +5,7 @@ from typing import Any, Optional
 import astropy.units as u
 from astropy.units import Quantity
 
-from salt_finder_charts.util import MOSMask, Metadata
+from salt_finder_charts.util import estimated_position_angle, MOSMask, Metadata
 
 
 class Mode(enum.Enum):
@@ -52,6 +52,20 @@ class ModeDetails(ABC):
 
         raise NotImplementedError
 
+    def automated_position_angle(self) -> bool:
+        """
+        Whether the position angle has been calculated automatically rather than having
+        been supplied.
+
+        Returns
+        -------
+        bool
+            Whether the position angle has been calculated.
+
+        """
+
+        raise NotImplementedError
+
     def metadata(self) -> Metadata:
         """
         Metadata characterising these mode details.
@@ -92,10 +106,18 @@ class ImagingModeDetails(ModeDetails):
 
     def __init__(self, pa: Optional[Quantity]):
         super().__init__(Mode.IMAGING)
-        self.pa = pa if pa is not None else 0 * u.deg
+        if  pa is not None:
+            self.pa = pa
+            self.automated_pa = False
+        else:
+            self.pa = 0 * u.deg
+            self.automated_pa = True
 
     def position_angle(self) -> Quantity:
         return self.pa
+
+    def automated_position_angle(self) -> bool:
+        return self.automated_pa
 
     def metadata(self) -> Metadata:
         return {}
@@ -131,10 +153,18 @@ class SlotModeDetails(ModeDetails):
 
     def __init__(self, pa: Optional[Quantity]):
         super().__init__(Mode.SLOT)
-        self.pa = pa if pa is not None else 0 * u.deg
+        if  pa is not None:
+            self.pa = pa
+            self.automated_pa = False
+        else:
+            self.pa = 0 * u.deg
+            self.automated_pa = True
 
     def position_angle(self) -> Quantity:
         return self.pa
+
+    def automated_position_angle(self) -> bool:
+        return self.automated_pa
 
     def metadata(self) -> Metadata:
         return {}
@@ -162,16 +192,28 @@ class LongslitModeDetails(ModeDetails):
         Slitwidth, as an angle.
     pa : Optional[Quantity]
         Position angle.
+    center_ra : Quantity
+        Right ascension of the slit center, as an angle
+    center_dec : Quantity
+        Declination of the slit enter, as an angle
 
     """
 
-    def __init__(self, slitwidth: Quantity, pa: Optional[Quantity]):
+    def __init__(self, slitwidth: Quantity, pa: Optional[Quantity], center_ra: Quantity, center_dec: Quantity):
         super().__init__(Mode.LONGSLIT)
-        self.pa = pa if pa is not None else 0 * u.deg
+        if  pa is not None:
+            self.pa = pa
+            self.automated_pa = False
+        else:
+            self.pa = estimated_position_angle(center_ra, center_dec)
+            self.automated_pa = True
         self.slitwidth = slitwidth
 
     def position_angle(self) -> Quantity:
         return self.pa
+
+    def automated_position_angle(self) -> bool:
+        return self.automated_pa
 
     def metadata(self) -> Metadata:
         return {
@@ -209,6 +251,9 @@ class MOSModeDetails(ModeDetails):
 
     def position_angle(self) -> Quantity:
         return self.mos_mask.position_angle
+
+    def automated_position_angle(self) -> bool:
+        return False
 
     def metadata(self) -> Metadata:
         return {

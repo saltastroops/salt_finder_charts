@@ -208,7 +208,7 @@ def standard_finder_charts(
             raise ValueError(
                 "A slit width is required if a finding chart is generated for longslit mode."
             )
-        mode_details = LongslitModeDetails(slitwidth=slitwidth, pa=position_angle)
+        mode_details = LongslitModeDetails(slitwidth=slitwidth, pa=position_angle, center_ra=ra, center_dec=dec)
     elif mode == Mode.MOS:
         mode_details = MOSModeDetails(mos_mask)
     else:
