@@ -1,10 +1,10 @@
 from abc import ABC
 from datetime import datetime, timedelta
-from typing import Any, BinaryIO, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, BinaryIO, Dict, List, NamedTuple, Optional, Tuple, Callable
 import zipfile
 
 from asteria import asteria
-from asteria.instruments import BaseInstrument
+from asteria.instruments import BaseInstrument, Star
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.units import Quantity
@@ -235,7 +235,7 @@ def julian_day_end(t: datetime) -> datetime:
         return noon + timedelta(days=1)
 
 
-def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Quantity, Quantity]=(1 * u.arcmin, 3 * u.arcmin), mag_range: Tuple[float, float]=(15, 18), min_star_separation: Quantity=3 * u.arcsec) -> Optional[Quantity]:
+def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Quantity, Quantity]=(1 * u.arcmin, 3 * u.arcmin), mag_range: Tuple[float, float]=(15, 18), min_star_separation: Quantity=10 * u.arcsec) -> Optional[Quantity]:
     """
     Find a suitable position angle.
 
@@ -277,14 +277,14 @@ def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Qu
     if len(matching_stars) == 0:
         return None
 
-    # TODO: Find the best of the matching stars.
-    best_star = matching_stars[0]
+    # Find the best of the matching stars.
+    best_star = sorted(matching_stars, key=_sorting_key(radius_range, mag_range))[0]
     best_star_coord = SkyCoord(best_star.ra, best_star.dec)
 
     return center.position_angle(best_star_coord)
 
 
-def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float], min_star_separation: Quantity):
+def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float], min_star_separation: Quantity) -> Callable[[Star], float]:
     """
     Create an "instrument" for the conditions stars must match for use in positioning a
     slit.
@@ -306,7 +306,7 @@ def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], ma
         The "instrument" with the search conditions.
 
     """
-    
+
     class _PositionAngleInstrument(BaseInstrument):
         def best_stars(self, stars):
             return [s for s in stars if s.merit >= 4]
@@ -320,3 +320,10 @@ def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], ma
         faint_limit=mag_range[1])
 
     return instr
+
+
+def _sorting_key(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float]):
+    target_radius = radius_range[0]
+    target_magnitude = 0.5 * sum(mag_range)
+
+    return lambda star: abs((star.radius - target_radius).to_value(u.arcmin)) + 0.2 * abs(star.g_mag - target_magnitude)
