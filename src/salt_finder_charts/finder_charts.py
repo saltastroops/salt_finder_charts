@@ -292,10 +292,13 @@ class FinderChart:
         sys.stdout = out
 
         # label for the position angle
+        pa_string = "PA = %.1f" % self.mode_details.position_angle().to_value(u.deg)
+        if self.mode_details.automated_position_angle():
+            pa_string += " (auto)"
         self.draw_label(
             0.95,
             -0.05,
-            "PA = %.1f" % self.mode_details.position_angle().to_value(u.deg),
+            pa_string,
             style="italic",
             weight="bold",
         )
