@@ -76,7 +76,7 @@ from salt_finder_charts.util import julian_day_start, julian_day_end
 def saltfc(
     bandpass: Optional[str],
     basename: str,
-    basic_annotations: Optional[bool],
+    basic_annotations: bool,
     dec: Optional[float],
     end_time: Optional[datetime],
     horizons_id: Optional[str],

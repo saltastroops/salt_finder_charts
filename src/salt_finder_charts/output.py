@@ -4,7 +4,7 @@ from io import BytesIO
 from typing import BinaryIO
 
 import PyPDF2
-from salt_finder_charts.finder_charts import FinderChart
+from salt_finder_charts.finder_chart import FinderChart
 from salt_finder_charts.util import Metadata
 
 

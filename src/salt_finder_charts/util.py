@@ -284,7 +284,7 @@ def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Qu
     return center.position_angle(best_star_coord)
 
 
-def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float], min_star_separation: Quantity) -> Callable[[Star], float]:
+def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float], min_star_separation: Quantity) -> BaseInstrument:
     """
     Create an "instrument" for the conditions stars must match for use in positioning a
     slit.

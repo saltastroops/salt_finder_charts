@@ -47,7 +47,7 @@ def standard_finder_charts(
     horizons_id: Optional[str] = None,
     horizons_stepsize: Optional[Quantity] = None,
     # image
-    survey: Optional[Survey] = Survey.POSS2UKSTU_RED,
+    survey: Survey = Survey.POSS2UKSTU_RED,
     # instrument mode details
     position_angle: Optional[Quantity] = None,
     slitwidth: Optional[Quantity] = None,
@@ -210,6 +210,8 @@ def standard_finder_charts(
             )
         mode_details = LongslitModeDetails(slitwidth=slitwidth, pa=position_angle, center_ra=ra, center_dec=dec)
     elif mode == Mode.MOS:
+        if not mos_mask:
+            raise ValueError('No MOS mask has been supplied.')
         mode_details = MOSModeDetails(mos_mask)
     else:
         raise ValueError(f"Mode unsupported: {mode.value}")

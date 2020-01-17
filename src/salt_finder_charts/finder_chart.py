@@ -6,7 +6,7 @@ from astropy import units as u
 import numpy as np
 import aplpy
 import pytz
-from typing import Any, BinaryIO, Callable, Generator, List, NamedTuple, Tuple, Union
+from typing import Any, BinaryIO, Callable, Generator, List, Optional, Tuple, Union
 
 from salt_finder_charts import __version__
 from salt_finder_charts.ephemerides import EphemerisService, Ephemeris
@@ -50,7 +50,7 @@ class FinderChart:
         ephemeris_service: EphemerisService,
         image_service: ImageService,
         mode_details: ModeDetails,
-        title: str,
+        title: Optional[str],
         basic_annotations: bool = False,
     ):
         # enforce timezones
