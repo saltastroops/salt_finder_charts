@@ -6,13 +6,20 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.units import Quantity
 
+MIN_RADIUS = 1 * u.arcmin
+MAX_RADIUS = 3 * u.arcmin
+
+MIN_MAG = 15
+MAX_MAG = 18
+
+MIN_STAR_SEPARATION = 10 * u.arcsec
 
 def estimated_position_angle(
     ra: Quantity,
     dec: Quantity,
-    radius_range: Tuple[Quantity, Quantity] = (1 * u.arcmin, 3 * u.arcmin),
-    mag_range: Tuple[float, float] = (15, 18),
-    min_star_separation: Quantity = 10 * u.arcsec,
+    radius_range: Tuple[Quantity, Quantity] = (MIN_RADIUS, MAX_RADIUS),
+    mag_range: Tuple[float, float] = (MIN_MAG, MAX_MAG),
+    min_star_separation: Quantity = MIN_STAR_SEPARATION,
 ) -> Optional[Quantity]:
     """
     Find a suitable position angle.
