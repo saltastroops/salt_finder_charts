@@ -5,7 +5,8 @@ from typing import Any, Optional
 import astropy.units as u
 from astropy.units import Quantity
 
-from salt_finder_charts.util import estimated_position_angle, MOSMask, Metadata
+from salt_finder_charts.position_angle import estimated_position_angle
+from salt_finder_charts.util import MOSMask, Metadata
 
 
 class Mode(enum.Enum):
