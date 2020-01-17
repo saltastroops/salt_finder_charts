@@ -52,8 +52,9 @@ setup(
     url='https://github.com/saltastroops/salt_finder_charts',
     version='0.2.0',
     zip_safe=False,
-    entry_points='''
-        [console_scripts]
-        saltfc=salt_finder_charts.cli:saltfc
-    '''
+    entry_points={
+        "console_scripts": [
+            "pa=salt_finder_charts.cli:pa",
+            "saltfc=salt_finder_charts.cli:saltfc"
+        ]}
 )
