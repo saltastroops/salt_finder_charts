@@ -84,7 +84,7 @@ def output_pdf(finder_chart: FinderChart, metadata: Metadata) -> BinaryIO:
 
     pdf = PyPDF2.PdfFileReader(out)
     writer = PyPDF2.PdfFileWriter()
-    writer.addAttachment('metadata', json.dumps(metadata).encode('UTF-8'))
+    writer.addAttachment("metadata", json.dumps(metadata).encode("UTF-8"))
 
     writer.addPage(pdf.getPage(0))
     bytes_stream = BytesIO()

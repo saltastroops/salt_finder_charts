@@ -377,7 +377,6 @@ class HorizonsEphemerisService(EphemerisService):
 
     def metadata(self) -> Metadata:
         return {
-            'horizons_id': self.object_id,
-            'horizons_stepsize': f"{self.stepsize.to_value(u.min)} min"
+            "horizons_id": self.object_id,
+            "horizons_stepsize": f"{self.stepsize.to_value(u.min)} min",
         }
-

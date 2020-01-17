@@ -7,7 +7,13 @@ from astropy.coordinates import SkyCoord
 from astropy.units import Quantity
 
 
-def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Quantity, Quantity]=(1 * u.arcmin, 3 * u.arcmin), mag_range: Tuple[float, float]=(15, 18), min_star_separation: Quantity=10 * u.arcsec) -> Optional[Quantity]:
+def estimated_position_angle(
+    ra: Quantity,
+    dec: Quantity,
+    radius_range: Tuple[Quantity, Quantity] = (1 * u.arcmin, 3 * u.arcmin),
+    mag_range: Tuple[float, float] = (15, 18),
+    min_star_separation: Quantity = 10 * u.arcsec,
+) -> Optional[Quantity]:
     """
     Find a suitable position angle.
 
@@ -36,7 +42,7 @@ def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Qu
     instr = _build_position_angle_instrument(
         radius_range=radius_range,
         mag_range=mag_range,
-        min_star_separation=min_star_separation
+        min_star_separation=min_star_separation,
     )
     center = SkyCoord(ra, dec)
     instr.target = center
@@ -56,7 +62,11 @@ def estimated_position_angle(ra: Quantity, dec: Quantity, radius_range: Tuple[Qu
     return center.position_angle(best_star_coord)
 
 
-def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float], min_star_separation: Quantity) -> BaseInstrument:
+def _build_position_angle_instrument(
+    radius_range: Tuple[Quantity, Quantity],
+    mag_range: Tuple[float, float],
+    min_star_separation: Quantity,
+) -> BaseInstrument:
     """
     Create an "instrument" for the conditions stars must match for use in positioning a
     slit.
@@ -84,17 +94,20 @@ def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], ma
             return [s for s in stars if s.merit >= 4]
 
     instr = _PositionAngleInstrument(
-        instr_name='PositionAngle',
+        instr_name="PositionAngle",
         instr_fov=radius_range[1],
         inner_excl_distance=radius_range[0],
         nearby_limit=min_star_separation,
         bright_limit=mag_range[0],
-        faint_limit=mag_range[1])
+        faint_limit=mag_range[1],
+    )
 
     return instr
 
 
-def _sorting_key(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float]):
+def _sorting_key(
+    radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float]
+):
     """
     A key function for sorting stars.
 
@@ -119,4 +132,6 @@ def _sorting_key(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float
     target_radius = radius_range[0]
     target_magnitude = 0.5 * sum(mag_range)
 
-    return lambda star: abs((star.radius - target_radius).to_value(u.arcmin)) + 0.2 * abs(star.g_mag - target_magnitude)
+    return lambda star: abs(
+        (star.radius - target_radius).to_value(u.arcmin)
+    ) + 0.2 * abs(star.g_mag - target_magnitude)

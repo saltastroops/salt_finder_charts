@@ -107,7 +107,7 @@ class ImagingModeDetails(ModeDetails):
 
     def __init__(self, pa: Optional[Quantity]):
         super().__init__(Mode.IMAGING)
-        if  pa is not None:
+        if pa is not None:
             self.pa = pa
             self.automated_pa = False
         else:
@@ -154,7 +154,7 @@ class SlotModeDetails(ModeDetails):
 
     def __init__(self, pa: Optional[Quantity]):
         super().__init__(Mode.SLOT)
-        if  pa is not None:
+        if pa is not None:
             self.pa = pa
             self.automated_pa = False
         else:
@@ -200,9 +200,15 @@ class LongslitModeDetails(ModeDetails):
 
     """
 
-    def __init__(self, slitwidth: Quantity, pa: Optional[Quantity], center_ra: Quantity, center_dec: Quantity):
+    def __init__(
+        self,
+        slitwidth: Quantity,
+        pa: Optional[Quantity],
+        center_ra: Quantity,
+        center_dec: Quantity,
+    ):
         super().__init__(Mode.LONGSLIT)
-        if  pa is not None:
+        if pa is not None:
             self.pa = pa
             self.automated_pa = False
         else:
@@ -217,9 +223,7 @@ class LongslitModeDetails(ModeDetails):
         return self.automated_pa
 
     def metadata(self) -> Metadata:
-        return {
-            'slitwidth': f"{self.slitwidth.to_value(u.arcsec)} arcsec"
-        }
+        return {"slitwidth": f"{self.slitwidth.to_value(u.arcsec)} arcsec"}
 
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         # draw the slit
@@ -257,9 +261,7 @@ class MOSModeDetails(ModeDetails):
         return False
 
     def metadata(self) -> Metadata:
-        return {
-            'mask_xml': self.mos_mask.xml
-        }
+        return {"mask_xml": self.mos_mask.xml}
 
     def annotate_finder_chart(self, finder_chart: Any) -> None:
         # draw the slits

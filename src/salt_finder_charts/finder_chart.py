@@ -79,8 +79,12 @@ class FinderChart:
             version=__version__,
             right_ascension=f"{self.ra.to_value(u.deg)} deg",
             declination=f"{self.dec.to_value(u.deg)} deg",
-            min_magnitude=self.magnitude_range.min_magnitude if self.magnitude_range else None,
-            max_magnitude=self.magnitude_range.max_magnitude if self.magnitude_range else None,
+            min_magnitude=self.magnitude_range.min_magnitude
+            if self.magnitude_range
+            else None,
+            max_magnitude=self.magnitude_range.max_magnitude
+            if self.magnitude_range
+            else None,
             bandpass=self.magnitude_range.bandpass if self.magnitude_range else None,
             position_angle=f"{self.pa.to_value(u.deg)} deg",
             start_time=self.start_time.isoformat(),
@@ -242,7 +246,7 @@ class FinderChart:
         x: Union[Quantity, float],
         y: Union[Quantity, float],
         text: str,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         Draw a text label.
@@ -295,13 +299,7 @@ class FinderChart:
         pa_string = "PA = %.1f" % self.mode_details.position_angle().to_value(u.deg)
         if self.mode_details.automated_position_angle():
             pa_string += " (auto)"
-        self.draw_label(
-            0.95,
-            -0.05,
-            pa_string,
-            style="italic",
-            weight="bold",
-        )
+        self.draw_label(0.95, -0.05, pa_string, style="italic", weight="bold")
 
         # label for the title
         if self.title:

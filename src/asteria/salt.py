@@ -9,7 +9,7 @@ class GuiderSingle(asteria.BaseInstrument):
 
 
 fif = GuiderSingle(
-    'FIF',  # instr_name
+    "FIF",  # instr_name
     5 * u.arcmin - 20 * u.arcsec,  # instr_fov, arcminutes radius
     1.5 * u.arcmin,  # inner_excl_distance, arcminutes
     10 * u.arcsec,  # probe_fov, arcseconds
@@ -23,19 +23,19 @@ class GuiderDual(asteria.GapInstrument):
         # rank each star linearly by magnitude and distance from exclusion zone
         def score_star(star):
             radius = (star.radius - self.inner_excl_distance) / (
-                self.instr_fov - self.inner_excl_distance - self.nearby_limit)
-            mag = 1 - (star.g_mag - self.bright_limit) / (self.faint_limit -
-                                                          self.bright_limit)
+                self.instr_fov - self.inner_excl_distance - self.nearby_limit
+            )
+            mag = 1 - (star.g_mag - self.bright_limit) / (
+                self.faint_limit - self.bright_limit
+            )
             return radius * mag
 
         # seperate stars into left and right of gap
         stars_left = [
-            s for s in stars
-            if s.merit >= 4 and s.instr_coord.lon.to_value(u.deg) < 0
+            s for s in stars if s.merit >= 4 and s.instr_coord.lon.to_value(u.deg) < 0
         ]
         stars_right = [
-            s for s in stars
-            if s.merit >= 4 and s.instr_coord.lon.to_value(u.deg) > 0
+            s for s in stars if s.merit >= 4 and s.instr_coord.lon.to_value(u.deg) > 0
         ]
 
         # sort in place by star score
@@ -56,7 +56,7 @@ class GuiderDual(asteria.GapInstrument):
 
 
 pfgs = GuiderDual(
-    'PFGS',  # instr_name
+    "PFGS",  # instr_name
     5 * u.arcmin - 22 * u.arcsec,  # instr_fov, arcminutes radius
     1.0 * u.arcmin,  # inner_excl_distance, arcminutes
     11 * u.arcsec,  # probe_fov, arcseconds
@@ -65,4 +65,4 @@ pfgs = GuiderDual(
     0.65 * u.arcmin,  # arcmin
     0 * u.deg,  # degrees
 )
-pfgs.inner_excl_shape = 'square'
+pfgs.inner_excl_shape = "square"

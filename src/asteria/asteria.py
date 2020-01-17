@@ -5,11 +5,7 @@ from astropy.coordinates import SkyCoord
 from astroquery.vizier import Vizier
 
 from asteria.exceptions import AsteriaError
-from asteria.instruments import (
-    Star,
-    BaseInstrument,
-    GapInstrument,
-)
+from asteria.instruments import Star, BaseInstrument, GapInstrument
 
 
 def view_sky(instr: BaseInstrument, max_stars: int = -1) -> List[Star]:
@@ -26,17 +22,18 @@ def view_sky(instr: BaseInstrument, max_stars: int = -1) -> List[Star]:
     # but is more important for future proofing this code...
     # Limits of +-50mas/yr are selected in RA and Dec.
     vquery = Vizier(
-        columns=["_r", 'Source', 'RA_ICRS', 'DE_ICRS', '+Gmag'],
+        columns=["_r", "Source", "RA_ICRS", "DE_ICRS", "+Gmag"],
         column_filters={
             "Gmag": (f"<={instr.faint_limit + 2:.2f}"),
             "pmRA": ("> -50 && < 50"),
-            "pmDE": ("> -50 && < 50")
+            "pmDE": ("> -50 && < 50"),
         },
         # column_filters={"Gmag":(">=13.0 && <=17.0")},
-        row_limit=max_stars)
-    results = vquery.query_region(instr.target,
-                                  radius=instr.instr_fov,
-                                  catalog="I/345/gaia2")[0]
+        row_limit=max_stars,
+    )
+    results = vquery.query_region(
+        instr.target, radius=instr.instr_fov, catalog="I/345/gaia2"
+    )[0]
 
     # if we find no stars in the field, raise an error
     if len(results) == 0:
@@ -46,26 +43,28 @@ def view_sky(instr: BaseInstrument, max_stars: int = -1) -> List[Star]:
         for row in results:
             stars.append(
                 Star(
-                    ra=row['RA_ICRS'] * u.deg,
-                    dec=row['DE_ICRS'] * u.deg,
-                    radius=row['_r'] * u.arcmin,
-                    g_mag=row['Gmag'],
-                ))
+                    ra=row["RA_ICRS"] * u.deg,
+                    dec=row["DE_ICRS"] * u.deg,
+                    radius=row["_r"] * u.arcmin,
+                    g_mag=row["Gmag"],
+                )
+            )
 
     return stars
 
 
 def find_best_stars(instr: BaseInstrument, stars: List[Star]) -> List[Star]:
-    '''
+    """
     Return the best stars as defined by the instrument's best_stars function
-    '''
+    """
     stars = instr.filter(stars)
 
     return instr.best_stars(stars)
 
 
-def produce_ds9_region(instr: BaseInstrument, stars: List[Star],
-                       best_stars: List[Star]):
+def produce_ds9_region(
+    instr: BaseInstrument, stars: List[Star], best_stars: List[Star]
+):
     # create a ds9 region to help visualise things - for testing purposes...
     # note this must be written to disk as a region file that must be loaded
     # from file by ds9 later with a system command
@@ -74,8 +73,10 @@ def produce_ds9_region(instr: BaseInstrument, stars: List[Star],
     # define its own debug output
 
     def draw_circle(r, label, c, x, y, width=3, params=""):
-        rline = (f"circle {x:.6f}d {y:.6f}d {r}\" "
-                 f"# text={{{label}}} color={c} width={width} {params}\n")
+        rline = (
+            f'circle {x:.6f}d {y:.6f}d {r}" '
+            f"# text={{{label}}} color={c} width={width} {params}\n"
+        )
         return rline
 
     # def draw_line(c, x1, y1, x2, y2, params=""):
@@ -93,40 +94,34 @@ def produce_ds9_region(instr: BaseInstrument, stars: List[Star],
     # setup some markers for guidelines...
     # these are specific to SALT
     # 4.0 arcmin
-    output += draw_circle(240,
-                          "4 arcmin",
-                          'green',
-                          ra_deg,
-                          dec_deg,
-                          width=1,
-                          params="select=0")
+    output += draw_circle(
+        240, "4 arcmin", "green", ra_deg, dec_deg, width=1, params="select=0"
+    )
     # 5.0 arcmin
-    output += draw_circle(300,
-                          "5 arcmin",
-                          'green',
-                          ra_deg,
-                          dec_deg,
-                          width=1,
-                          params="select=0")
+    output += draw_circle(
+        300, "5 arcmin", "green", ra_deg, dec_deg, width=1, params="select=0"
+    )
 
     # draw inner exclusion distance
     output += draw_circle(
         instr.inner_excl_distance.to_value(u.arcsec),
         f"{instr.inner_excl_distance.to_value(u.arcmin)} arcmin",
-        'red',
+        "red",
         ra_deg,
         dec_deg,
-        width=2)
+        width=2,
+    )
 
     # the actual target/centre of search; in pink so it stands out!
-    output += draw_circle(10, "target", 'magenta', ra_deg, dec_deg)
+    output += draw_circle(10, "target", "magenta", ra_deg, dec_deg)
 
     # a line near the target to make sure the slit gap width is OK
     if isinstance(instr, GapInstrument):
         gap_width = instr.slit_gap_radius.to_value(u.arcmin) * 2
         pa = instr.slit_gap_angle.to_value(u.rad)
-        output += (f"box {ra_deg} {dec_deg} {gap_width}' 10' {pa}r #"
-                   f" fill=0 color=red\n")
+        output += (
+            f"box {ra_deg} {dec_deg} {gap_width}' 10' {pa}r #" f" fill=0 color=red\n"
+        )
 
     # TODO: make these colours editable too
     star_merit_colours = {
@@ -142,15 +137,19 @@ def produce_ds9_region(instr: BaseInstrument, stars: List[Star],
         colour = "yellow"
 
         # red == excluded candidate guide star
-        if (s.merit == 0):
+        if s.merit == 0:
             colour = "red"
 
         colour = star_merit_colours[s.merit]
 
         # write the star out to the region file, with the colour reflecting
         # its suitability
-        output += "circle %.6fd %.6fd 2\" # text={%.2f} color=%s\n" % (
-            s.ra.to_value(u.deg), s.dec.to_value(u.deg), s.g_mag, colour)
+        output += 'circle %.6fd %.6fd 2" # text={%.2f} color=%s\n' % (
+            s.ra.to_value(u.deg),
+            s.dec.to_value(u.deg),
+            s.g_mag,
+            colour,
+        )
 
     # indicate the best stars
     for s in best_stars:
@@ -158,7 +157,7 @@ def produce_ds9_region(instr: BaseInstrument, stars: List[Star],
             output += draw_circle(
                 10,
                 "best star",
-                'cyan',
+                "cyan",
                 s.ra.to_value(u.deg),
                 s.dec.to_value(u.deg),
                 width=2,
