@@ -95,6 +95,27 @@ def _build_position_angle_instrument(radius_range: Tuple[Quantity, Quantity], ma
 
 
 def _sorting_key(radius_range: Tuple[Quantity, Quantity], mag_range: Tuple[float, float]):
+    """
+    A key function for sorting stars.
+
+    The most suitable star comes first in a sorted list.
+
+    Parameters
+    ----------
+    radius_range : pair of Quantity
+        The inner and outer radius (as an angle) of the annulus in which a suitable may
+        be located.
+    mag_range : pair of float
+        The minimum (brightest) and maximum (faintest) magnitude a suitable star may
+        have.
+
+    Returns
+    -------
+    float
+        A function which can be used for sorting.
+
+    """
+
     target_radius = radius_range[0]
     target_magnitude = 0.5 * sum(mag_range)
 
