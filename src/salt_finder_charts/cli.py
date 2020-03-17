@@ -9,7 +9,7 @@ from salt_finder_charts import standard_finder_charts, __version__
 from salt_finder_charts.image import Survey
 from salt_finder_charts.mode import Mode
 from salt_finder_charts.output import OutputFormat
-from salt_finder_charts.position_angle import MAX_MAG, MAX_RADIUS, MIN_MAG, MIN_RADIUS, MIN_STAR_SEPARATION
+from salt_finder_charts.position_angle import estimated_position_angle, MAX_MAG, MAX_RADIUS, MIN_MAG, MIN_RADIUS, MIN_STAR_SEPARATION
 from salt_finder_charts.util import julian_day_start, julian_day_end
 
 
@@ -188,8 +188,8 @@ def pa(ra: float, dec: float, min_radius, max_radius, min_mag, max_mag, min_sepa
     minimum and maximum radius. This star must have a magnitude between a minimum and
     maximum magnitude, and it must have a minimum separation from neighbouring stars.
 
-    The position angle is returned as an angle in degrees.
+    The position angle is output as an angle in degrees.
 
     """
 
-    print(ra, dec, min_radius, max_radius, min_mag, max_mag, min_separation)
+    print(estimated_position_angle(ra=ra * u.deg, dec=dec * u.deg, radius_range=(min_radius * u.arcmin, max_radius * u.deg), mag_range=(min_radius, max_radius), min_star_separation=min_separation * u.arcsec))
