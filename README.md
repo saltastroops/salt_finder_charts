@@ -154,7 +154,7 @@ output | Function for converting a finding chart into an output format such as p
 start_time | Start time from which to generate finder charts. This is only relevant for non-sidereal targets.  Must be timezone-aware. | Start of the current Julian day.
 title | Title for the finder chart.
 
-## Command-line interface
+## Command-line interface for generating finder charts
 
 For convenience, a command `saltfc` is provided, which you can run in a terminal. It saves the generated finding charts in a directory. The filename of the generated files consists of a basename (such as `FinderChart`) followed by a dash and a running number. The basename can be customised with a command line option. Existing files are replaced without warning,
 
@@ -196,3 +196,24 @@ Argument | Description | Default
 --title | Title of the finder chart.
 
 Both the start and end time use the format `yyyy-mm-dd hh:mm:ss`. For example, valid values are `2019-01-25 9:45:16'` or `2020-01-02 12:00:00`.
+
+## Command interface for calculating position angles
+
+A suitable position angle for a target can be calculated with the `pa` command. It tries to find a star in an annulus around the target with a magnitude in a given magnitude range. The stsr must have a given minimum separation from its neighbouring stars.
+
+The radii, magnitudes and minimum separation all have default values, and usually you should not have to specify them. Hence a typical call of `pa` looks as follows./
+
+```bash
+pa --ra 217.524 --dec -23.97611
+```
+
+Here is a list of the available arguments for `pa`.
+
+Argument | Description | Default
+--- | --- | ---
+--dec | Declination of the target, in degrees.
+--max-mag | Maximum (faintest) magnitude a suitable star may have. | 18
+--max-radius | Maximum radius, in arcminutes, of the annulus in which the suitable stars are located. " | 3
+--min-mag | Minimum (brightest) magnitude a suitable star may have. | 15
+--min-radius | Minimum radius of the annulus in which the suitable stars are located. | 1
+--min-separation | Minimum angular distance, in arcseconds, a suitable star must have from its neighbouring stars. | 10
