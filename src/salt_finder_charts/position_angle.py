@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
-from asteria import asteria
-from asteria.instruments import BaseInstrument, Star
+from gilmenel import gilmenel
+from gilmenel.instruments import BaseInstrument, Star
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.units import Quantity
@@ -52,11 +52,12 @@ def estimated_position_angle(
         min_star_separation=min_star_separation,
     )
     center = SkyCoord(ra, dec)
-    instr.target = center
+    instr.point_to(center)
 
     # search for stars matching the conditions
-    stars = asteria.view_sky(instr)
-    matching_stars = asteria.find_best_stars(instr, stars)
+    gilmenel.init()
+    stars = gilmenel.view_sky(instr)
+    matching_stars = gilmenel.find_best_stars(instr, stars)
 
     # don't calculate a position angle if there is no suitable star
     if len(matching_stars) == 0:
@@ -101,7 +102,7 @@ def _build_position_angle_instrument(
             return [s for s in stars if s.merit >= 4]
 
     instr = _PositionAngleInstrument(
-        instr_name="PositionAngle",
+        name="PositionAngle",
         instr_fov=radius_range[1],
         inner_excl_distance=radius_range[0],
         nearby_limit=min_star_separation,

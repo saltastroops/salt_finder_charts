@@ -12,6 +12,7 @@ requirements = [
     'Click',
     'defusedxml',
     'ephem',
+    'gilmenel',
     'numpy',
     'pillow',
     'PyPDF2',
