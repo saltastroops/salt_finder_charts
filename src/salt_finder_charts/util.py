@@ -88,7 +88,7 @@ class MOSMask:
     Parameters
     ----------
     rsmt : BinaryIO
-        RSMT file for the MOS mask.
+        RSMT (or XML) file for the MOS mask.
 
     Attributes
     ----------
@@ -106,9 +106,18 @@ class MOSMask:
 
     def __init__(self, rsmt: BinaryIO):
         # extract the MOS mask definition from the RSMT file
-        mos_zip = zipfile.ZipFile(rsmt)
-        self.xml = mos_zip.read("Slitmask.xml").decode("UTF-8")
-        mos_zip.close()
+        try:
+            with zipfile.ZipFile(rsmt) as mos_zip:
+                self.xml = mos_zip.read("Slitmask.xml").decode("UTF-8")
+        except zipfile.BadZipFile:
+            self.xml = None
+
+        # if this has failed, assume the file is an XML file
+        if not self.xml:
+            rsmt.seek(0)
+            self.xml = rsmt.read().decode("UTF-8")
+
+        # get the DOM
         doc = parseString(self.xml)
 
         # extract the mask position and rotation angle
