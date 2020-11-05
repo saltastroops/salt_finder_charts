@@ -14,6 +14,7 @@ MAX_MAG = 18
 
 MIN_STAR_SEPARATION = 10 * u.arcsec
 
+
 def estimated_position_angle(
     ra: Quantity,
     dec: Quantity,
