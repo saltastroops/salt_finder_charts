@@ -9,7 +9,14 @@ from salt_finder_charts import standard_finder_charts, __version__
 from salt_finder_charts.image import Survey
 from salt_finder_charts.mode import Mode
 from salt_finder_charts.output import OutputFormat
-from salt_finder_charts.position_angle import estimated_position_angle, MAX_MAG, MAX_RADIUS, MIN_MAG, MIN_RADIUS, MIN_STAR_SEPARATION
+from salt_finder_charts.position_angle import (
+    estimated_position_angle,
+    MAX_MAG,
+    MAX_RADIUS,
+    MIN_MAG,
+    MIN_RADIUS,
+    MIN_STAR_SEPARATION,
+)
 from salt_finder_charts.util import julian_day_start, julian_day_end
 
 
@@ -173,13 +180,32 @@ def saltfc(
 
 
 @click.command()
-@click.option("--dec", type=float, required=True, help="declination of the target, in degrees")
+@click.option(
+    "--dec", type=float, required=True, help="declination of the target, in degrees"
+)
 @click.option("--max-mag", type=float, default=MAX_MAG, help="maximum magnitude")
-@click.option("--max-radius", type=float, default=MAX_RADIUS.to_value(u.arcmin), help="maximum radius, in arcminutes")
+@click.option(
+    "--max-radius",
+    type=float,
+    default=MAX_RADIUS.to_value(u.arcmin),
+    help="maximum radius, in arcminutes",
+)
 @click.option("--min-mag", type=float, default=MIN_MAG, help="minimum magnitude")
-@click.option("--min-radius", type=float, default=MIN_RADIUS.to_value(u.arcmin), help="minimum radius, in arcminutes")
-@click.option("--min-separation", type=float, default=MIN_STAR_SEPARATION.to_value(u.arcsec), help="minimum separation between stars, in arcseconds")
-@click.option("--ra", type=float, required=True, help="right ascension of the target, in degrees")
+@click.option(
+    "--min-radius",
+    type=float,
+    default=MIN_RADIUS.to_value(u.arcmin),
+    help="minimum radius, in arcminutes",
+)
+@click.option(
+    "--min-separation",
+    type=float,
+    default=MIN_STAR_SEPARATION.to_value(u.arcsec),
+    help="minimum separation between stars, in arcseconds",
+)
+@click.option(
+    "--ra", type=float, required=True, help="right ascension of the target, in degrees"
+)
 def pa(ra: float, dec: float, min_radius, max_radius, min_mag, max_mag, min_separation):
     """
     Calculate a suitable position angle for a target.
@@ -192,4 +218,12 @@ def pa(ra: float, dec: float, min_radius, max_radius, min_mag, max_mag, min_sepa
 
     """
 
-    print(estimated_position_angle(ra=ra * u.deg, dec=dec * u.deg, radius_range=(min_radius * u.arcmin, max_radius * u.deg), mag_range=(min_radius, max_radius), min_star_separation=min_separation * u.arcsec))
+    print(
+        estimated_position_angle(
+            ra=ra * u.deg,
+            dec=dec * u.deg,
+            radius_range=(min_radius * u.arcmin, max_radius * u.deg),
+            mag_range=(min_radius, max_radius),
+            min_star_separation=min_separation * u.arcsec,
+        )
+    )

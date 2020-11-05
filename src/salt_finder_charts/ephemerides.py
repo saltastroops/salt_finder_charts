@@ -1,6 +1,6 @@
 from abc import ABC
 import bisect
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, NamedTuple, Optional, Tuple
 
 from astropy.units import Quantity
@@ -331,7 +331,9 @@ class HorizonsEphemerisService(EphemerisService):
         # query Horizons
         self.object_id = object_id
         start = start_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
-        stop = end_time.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
+        # Make sure the whole time interval is covered by the queried ephemerides
+        end_time_with_margin = end_time + timedelta(seconds=stepsize.to_value(u.second))
+        stop = end_time_with_margin.astimezone(tzutc()).strftime("%Y-%m-%d %H:%M:%S")
         # Horizons requires an int for the step size. As round() might call NumPy's
         # round method and thus produce a float, we have to round "manually" using
         # the int function.
