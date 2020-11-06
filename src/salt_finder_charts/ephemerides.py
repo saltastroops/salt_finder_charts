@@ -353,7 +353,7 @@ class HorizonsEphemerisService(EphemerisService):
             dec = float(ephemerides["DEC"][row]) * u.deg
             ra_rate = float(ephemerides["RA_rate"][row]) * u.arcsec / u.hour
             dec_rate = ephemerides["DEC_rate"][row] * u.arcsec / u.hour
-            magnitude = ephemerides["V"][row]
+            magnitude = ephemerides["V"][row] if "V" in ephemerides.keys() else 0
             magnitude_range = MagnitudeRange(
                 min_magnitude=magnitude, max_magnitude=magnitude, bandpass="V"
             )
