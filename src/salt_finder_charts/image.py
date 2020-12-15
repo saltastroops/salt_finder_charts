@@ -101,7 +101,7 @@ class SurveyImageService(ImageService):
                 Survey.POSS1_RED: "poss1_red",
                 Survey.POSS1_BLUE: "poss1_blue",
             }
-            url = "http://archive.stsci.edu/cgi-bin/dss_search"
+            url = "https://archive.stsci.edu/cgi-bin/dss_search"
             params = urllib.parse.urlencode(
                 {
                     "v": survey_identifiers[self.survey],
